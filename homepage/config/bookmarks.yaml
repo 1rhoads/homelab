@@ -1,0 +1,17 @@
+---
+# Homepage Bookmarks Configuration
+# Reference: https://gethomepage.dev/configs/bookmarks/
+
+- Homelab Documentation:
+    - MikroTik Docs:
+        - icon: mikrotik
+          href: https://help.mikrotik.com/docs/
+    - Proxmox VE Wiki:
+        - icon: proxmox
+          href: https://pve.proxmox.com/wiki/Main_Page
+    - OpenWrt Guide:
+        - icon: openwrt
+          href: https://openwrt.org/docs/start
+    - LibreNMS Docs:
+        - icon: librenms
+          href: https://docs.librenms.org/

@@ -1,0 +1,26 @@
+---
+# Homepage General Settings
+# Reference: https://gethomepage.dev/configs/settings/
+
+title: "Homelab Operations Hub"
+theme: dark
+color: slate
+headerStyle: clean
+cardBlur: md
+
+layout:
+  Network & Monitoring:
+    style: row
+    columns: 4
+  Virtualization & Servers:
+    style: row
+    columns: 3
+  Network Switches (MikroTik):
+    style: row
+    columns: 3
+  Wireless Access Points (OpenWrt):
+    style: row
+    columns: 3
+  Security & Operations:
+    style: row
+    columns: 2

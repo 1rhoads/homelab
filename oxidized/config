@@ -1,51 +1,58 @@
 ---
-username: [default username for ssh]
-password: [default password for ssh]
-model: junos
+# Global default SSH credentials
+username: admin
+password: changeme
+model: routeros
 resolve_dns: true
 interval: 3600
 use_syslog: false
 debug: false
-run_once: false
 threads: 30
-use_max_threads: false
 timeout: 20
 retries: 3
 prompt: !ruby/regexp /^([\w.@-]+[#>]\s?)$/
 rest: 0.0.0.0:8888
-next_adds_job: false
-vars: {}
-groups: {}
-group_map: {}
+
+# Model-specific credentials and configurations
 models:
-  aoscx:
-    username: [model specific ssh username]
-    password: [model specific ssh password]
-  procurve:
-    username: [model specific ssh username]
-    password: [model specific ssh password]
+  # MikroTik RouterOS Switches / Routers
+  routeros:
+    username: admin
+    password: changeme
+    # vars:
+    #   ssh_keys: /home/oxidized/.config/oxidized/id_rsa
+
+  # OpenWrt Access Points / Routers
+  openwrt:
+    username: root
+    password: changeme
+    # vars:
+    #   ssh_keys: /home/oxidized/.config/oxidized/id_rsa
+
 pid: "/home/oxidized/.config/oxidized/pid"
 crash:
   directory: "/home/oxidized/.config/oxidized/crashes"
   hostnames: false
+
 stats:
-  history_size: 10
+  history_size: 20
+
 input:
   default: ssh, telnet
   debug: false
   ssh:
     secure: false
-  ftp:
-    passive: true
   utf8_encoded: true
+
 output:
   default: git
   file:
     directory: "/home/oxidized/.config/oxidized/configs"
   git:
     user: Oxidized
-    email: o@example.com
+    email: oxidized@homelab.local
     repo: "/home/oxidized/.config/oxidized/oxidized.git"
+
 source:
   default: http
   debug: false
@@ -57,4 +64,5 @@ source:
       model: os
       group: group
     headers:
-      X-Auth-Token: [your LibreNMS API token]
+      # Replace with your LibreNMS API token generated under LibreNMS -> Settings -> API Access
+      X-Auth-Token: "REPLACE_WITH_LIBRENMS_API_TOKEN"

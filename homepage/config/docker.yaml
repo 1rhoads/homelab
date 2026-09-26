@@ -1,0 +1,6 @@
+---
+# Docker Integration Configuration
+# Reference: https://gethomepage.dev/configs/docker/
+
+my-docker:
+  socket: /var/run/docker.sock

@@ -1,63 +1,222 @@
-# librenms-oxidized_docker
-Simple Portainer/Docker setup for LibreNMS + Oxidized
+# Homelab Operations Stack
 
-## Purpose
-This is a basic guide to setting up a LibreNMS instance with Oxidized all inside a single Portainer Stack. The same basic steps would work with Docker Compose if you make a few modifications. This is built off the [official docker compose example](https://github.com/librenms/docker/tree/master/examples/compose).
+A production-ready [Portainer](https://www.portainer.io/) and Docker Compose stack specifically architected for homelabs running **multiple MikroTik switches**, **Proxmox VE servers**, and **multiple OpenWrt access points**.
 
-## What is different?
-There are a couple of main things I changed from the official compose example.
-* Since we are using Portainer, you need to use `stack.env` to reference your .env files.
-* Named volumes for easy access to the various configs/files.
-* Added the oxidized container into the stack.
+This stack provides centralized network monitoring, automated configuration versioning, telemetry metrics, visualization dashboards, unified reverse proxying with local TLS, automated vulnerability scanning, and an interactive **Homepage** status dashboard.
 
-For Oxidized, the config is changed to use git to store configs locally and to access the librenms container using its containername in the URL.
+---
 
-## Prerequisite
-1. Host OS with Docker installed.
-2. Portainer installed. You can find instructions [here](https://docs.portainer.io/start/install-ce/server/docker/linux)
+## Architecture Overview
 
-## Setup
+```
+                                  +------------------------------------+
+                                  |    Local Network / Homelab Clients |
+                                  +-----------------+------------------+
+                                                    |
+                                                    v
+                                      +---------------------------+
+                                      |     Caddy Reverse Proxy   |
+                                      |    (Internal TLS / CA)    |
+                                      +-------------+-------------+
+                                                    |
+         +------------------+-----------------------+-----------------------+--------------------+
+         |                  |                       |                       |                    |
+         v                  v                       v                       v                    v
++-----------------+ +-----------------+   +-------------------+   +------------------+ +-----------------+
+|    Homepage     | |    LibreNMS     |   |      Grafana      |   |    Prometheus    | |    Oxidized     |
+| Dashboard Hub   | | Network Monitor |   |    Dashboards     |   |  Metrics Engine  | |  Config Backup  |
+| (Live Widgets)  | | (SNMP/Syslog)   |   | (Auto-Datasource) |   |  (Time Series)   | |  (Git Version)  |
++--------+--------+ +--------+--------+   +---------+---------+   +---------+--------+ +--------+--------+
+         |                   |                      |                       |                   |
+         | Docker Socket     |                      |                       |                   |
+         v                   |                      |                       |                   |
++-----------------+          +<-- Node API Sync ------------------------------------------------+
+|  Trivy Scanner  |          |                                              |
+|  (Vuln Engine)  |          +------------------------- Monitored Infrastructure
++-----------------+                                    |                 |
+                                       +---------------+                 +---------------+
+                                       v                                 v               v
+                             +-------------------+             +------------------+ +-------------------+
+                             | MikroTik Switches |             |   Proxmox VE     | |  OpenWrt APs      |
+                             | (Core, PoE, Edge) |             |  (Hypervisors)   | | (Living Rm, Office|
+                             +-------------------+             +------------------+ +-------------------+
+```
 
-### Prep
-1. Go to the [official docker compose example](https://github.com/librenms/docker/tree/master/examples/compose) and download the 3 env files (`.env`, `librenms.env`, `msmtpd.env`)
+### Included Services
 
-### Portainer Stack
-1. Login to Portainer.
-2. Go into `Stacks` and click `+ Add stack`.
-3. Give it a name.
-4. Paste the [custom compose file](compose.yml) into the web editor.
-5. Click `Load variables from .env file` at the bottom. You will need to do this step three times to load each of the 3 .env files you downloaded in the [Prep](#prep) step above.
-6. Modify the variables as needed. The primary ones you will probably need to update are `LIBRENMS_SNMP_COMMUNITY` and all the `SMTP` values. Go ahead and set a good `MYSQL_PASSWORD` while you are at it.
-7. Click `Deploy the stack`
+| Service | Container Image | Port | Description |
+| :--- | :--- | :--- | :--- |
+| **Caddy** | `caddy:2-alpine` | `80`, `443` | Reverse proxy with automatic local TLS (`tls internal`) routing domains to containers |
+| **Homepage** | `ghcr.io/gethomepage/homepage:latest` | `3001` (3000) | Modern status dashboard with Docker health badges, switches, APs & Proxmox |
+| **LibreNMS** | `librenms/librenms:latest` | `3300` (8000) | Autodiscovery, SNMP monitoring, alerting, interface state tracking |
+| **Dispatcher** | `librenms/librenms:latest` | — | Sidecar poller and discovery worker pool for LibreNMS |
+| **Syslog-NG** | `librenms/librenms:latest` | `514` (UDP/TCP) | Centralized syslog collector for all MikroTik, Proxmox, and OpenWrt logs |
+| **SNMP Trapd** | `librenms/librenms:latest` | `162` (UDP/TCP) | Ingests real-time hardware alerts and link state traps from switches |
+| **Oxidized** | `oxidized/oxidized:latest` | `8888` | Automated configuration backup engine saving RouterOS and OpenWrt configs into Git |
+| **Prometheus** | `prom/prometheus:latest` | `9090` | Time-series metrics scraper with alert rules for Proxmox, switches, and APs |
+| **Grafana** | `grafana/grafana-oss:latest` | `3000` | Telemetry dashboards pre-provisioned with the Prometheus data source |
+| **Trivy** | `aquasec/trivy:latest` | `4954` | Vulnerability and security scanner server for containers, images, and filesystems |
+| **MariaDB** | `mariadb:10.11` | — | High-performance LTS database store for LibreNMS |
+| **Redis** | `redis:7.2-alpine` | — | Queue management and caching backend for LibreNMS |
+| **msmtpd** | `crazymax/msmtpd:latest` | — | Outbound email relay for LibreNMS alert notifications |
 
-### Initial Setup
-1. Connect to the LibreNMS web interface using your browser. `http://[docker host or IP]:3300/`
-   - if you changed the port mappings in the compose file, make sure to adjust.
-2. Complete the initial setup steps. On the validation page, you may see some errors about the Poller. Those cleared up for me after a few minutes and went all green.
-3. In the top right, click the gear and then `Global Settings`. In the `Poller` tab, go set a default `Communities` to be used for SNMP checks.
-4. Go ahead and connect to at least one or two devices so you can test config backups later. How you go about this will depend on a number of factors. For simple testing, you can just add them manually by IP and not worry about auto-discovery.
-5. Go to `http://[docker host or IP]:3300/api-access/` and generate a token. Save this for later.
+---
 
-### Oxidized Setup
-1. In Portainer, stop the `librenms_oxidized` container.
-2. Find the mount point for your oxidized configs. You can find this in Portainer by going to `Volumes` and looking for `librenms_oxidized-config`. The `Mount point` is what you are looking for.
-3. SSH (or console) to your docker host.
-4. Edit the oxidized config file: `sudo nano [mount point path from step 2]`
-5. You can start with this [customized config file](oxidized_config)
-   - Make sure to edit the usernames and passwords. There is a default at the top, and in the `models` section there is a template for doing a login for each model type if needed.
-   - On the last line, you will need to put the API token you got in the Initial Setup step earlier.
-   - In the `source` section there is a URL. You will **not** need to edit that since both containers are in the same stack. It will be accessing it using the container name and the internal container port.
-6. Go into Portainer and start the `librenms_oxidized` container again.
+## Scaling to Multiple Switches & APs
 
-### Enable Oxidized
-1. Use a browser to access LibreNMS web interface: `http://[docker host or IP]:3300/`
-2. Go to the gear in the top right, and go to `Global Settings`.
-3. Go to the `External` tab.
-4. Enter the URL as `http://librenms_oxidized:8888`. Keep in mind, this is the internal container name and port, so unless you modified the container name, this should work.
-5. Enable the config versioning option and the return of groups.
-6. Variable mapping - here you may need to add some mapping so that the OS that LibreNMS passes along will match a model that Oxidized is familiar with. For instance, I had to add `arubaos-cx` > `aoscx` for my CX switches. Once things are connected, if your Oxidized logs show errors similar to `{:name=>"[IP of switch]", :model=>"[LibreNMS OS value]", :group=>nil} raised Oxidized::ModelNotFound with message...` then you will need to add mapping for that model.
-   - If you do need mapping, set the `Source` dropdown to `os`, set the dropdown on the left to `Match` and enter the LibreNMS OS (it's what showed up in the error above). Then the `Target` should be set to `os` and in `Replacement`, enter a value that exists in Oxidized. You can find the list of supported models [here](https://github.com/ytti/oxidized/blob/master/docs/Supported-OS-Types.md).
-7. Now turn on the top option to `Enable Oxidized Support`.
+This stack is designed from the ground up to scale effortlessly across multiple devices:
 
-## The End
-You can monitor the Oxidized logs from Portainer to make sure it is able to connect to the devices. Once the initial backups complete, you should be able to view them from within the device page.
+### 1. Automatic Discovery in LibreNMS
+Rather than adding each switch and access point manually:
+1. In LibreNMS, navigate to **Settings (Gear icon)** &rarr; **Global Settings** &rarr; **Discovery** &rarr; **Subnets**.
+2. Add your management subnet (e.g., `192.168.1.0/24`).
+3. Under **Poller** &rarr; **Communities**, add your SNMP community (default: `homelab`).
+4. LibreNMS will automatically scan the subnet, discover every switch and AP, and map inter-switch and AP links using **LLDP/CDP**!
+
+### 2. Automated Multi-Device Backups in Oxidized
+Oxidized does **not** need manual IP configuration for each device:
+- It queries LibreNMS's API (`/api/v0/oxidized`) dynamically.
+- When you add 5 switches and 10 APs to LibreNMS, LibreNMS hands the entire list to Oxidized.
+- Oxidized matches all MikroTik devices to `model: routeros` and all APs to `model: openwrt`, connects via SSH, and commits every device's configuration to Git separately (`<hostname>.cfg`).
+
+### 3. Multi-Device Metrics in Prometheus
+In [prometheus/prometheus.yml](prometheus/prometheus.yml), you can add any number of target IPs:
+```yaml
+  - job_name: "mikrotik"
+    static_configs:
+      - targets:
+          - "192.168.1.2:80"   # Core Switch
+          - "192.168.1.3:80"   # Distribution / PoE Switch
+          - "192.168.1.4:80"   # Edge Switch
+
+  - job_name: "openwrt"
+    static_configs:
+      - targets:
+          - "192.168.1.11:9100"  # AP Living Room
+          - "192.168.1.12:9100"  # AP Office
+          - "192.168.1.13:9100"  # AP Garage / Outdoor
+```
+
+### 4. Dedicated Sections in Homepage
+In [homepage/config/services.yaml](homepage/config/services.yaml), switches and APs are organized into their own clean grid categories (**Network Switches** and **Wireless Access Points**), providing one-click access to each device's WebFig or LuCI interface.
+
+---
+
+## Device Setup Commands
+
+### MikroTik Switches (RouterOS)
+Run on each of your MikroTik switches:
+```routeros
+# Enable SNMP
+/snmp community set [ find default=yes ] name=homelab addresses=0.0.0.0/0
+/snmp set enabled=yes contact="admin@iye.internal" location="Rack"
+
+# Forward Syslog to Docker Host
+/system logging action add name=librenms target=remote remote=<DOCKER_HOST_IP> remote-port=514 src-address=0.0.0.0
+/system logging add action=librenms topics=info,warning,error
+
+# Enable Native Prometheus Metrics (RouterOS v7)
+/tool metrics export prometheus
+
+# Create Oxidized Backup User
+/user group add name=oxidized policy=read,api,test,ssh
+/user add name=oxidized group=oxidized password="StrongPassword123!"
+```
+
+---
+
+### OpenWrt Access Points
+Run on each of your OpenWrt APs via SSH:
+```sh
+# 1. Install Prometheus Node Exporter (WiFi + System Telemetry)
+opkg update
+opkg install prometheus-node-exporter-lua \
+             prometheus-node-exporter-lua-wifi \
+             prometheus-node-exporter-lua-netstat \
+             prometheus-node-exporter-lua-openwrt
+/etc/init.d/prometheus-node-exporter-lua enable
+/etc/init.d/prometheus-node-exporter-lua start
+
+# 2. Enable SNMP for LibreNMS
+opkg install snmpd
+uci set snmpd.@agent[0].agentaddress='UDP:161'
+uci delete snmpd.public
+uci set snmpd.homelab=snmpd.read_access
+uci set snmpd.homelab.community='homelab'
+uci commit snmpd
+/etc/init.d/snmpd enable
+/etc/init.d/snmpd restart
+
+# 3. Forward Syslog to Docker Host
+uci set system.@system[0].log_ip='<DOCKER_HOST_IP>'
+uci set system.@system[0].log_port='514'
+uci set system.@system[0].log_proto='udp'
+uci commit system
+/etc/init.d/log restart
+```
+
+---
+
+### Proxmox VE
+Run on your Proxmox server(s):
+```bash
+# Prometheus Node Exporter
+apt update && apt install -y prometheus-node-exporter
+systemctl enable --now prometheus-node-exporter
+
+# SNMP for LibreNMS
+apt install -y snmpd
+echo "rocommunity homelab <DOCKER_HOST_IP>" >> /etc/snmp/snmpd.conf
+systemctl restart snmpd
+
+# Syslog Forwarding
+echo "*.* @<DOCKER_HOST_IP>:514" > /etc/rsyslog.d/50-remote.conf
+systemctl restart rsyslog
+```
+
+---
+
+## Deployment via Portainer
+
+1. Push your changes to your repository:
+   ```bash
+   git add .
+   git commit -m "Configure multi-device monitoring, Caddy, and Homepage"
+   git push origin main
+   ```
+2. In **Portainer**, navigate to **Stacks** &rarr; select **homelab**.
+3. Under **Environment variables**, set:
+   - `DOMAIN`: `iye.internal`
+   - `PROXMOX_HOST`: `<PROXMOX_IP>`
+   - `MIKROTIK_CORE_HOST`: `<CORE_SWITCH_IP>`
+   - `MIKROTIK_SW2_HOST`: `<SWITCH_2_IP>`
+   - `OPENWRT_AP1_HOST`: `<AP_1_IP>`
+   - `OPENWRT_AP2_HOST`: `<AP_2_IP>`
+   - `MYSQL_PASSWORD`: `<YOUR_PASSWORD>`
+   - `GRAFANA_ADMIN_PASSWORD`: `<YOUR_PASSWORD>`
+4. Click **Pull and redeploy** with **Re-pull image** toggled on.
+
+---
+
+## Service URLs
+
+With `DOMAIN=iye.internal` configured:
+- **Homepage Dashboard**: `https://homelab.iye.internal` (or `https://iye.internal`)
+- **LibreNMS**: `https://librenms.iye.internal` (or direct: `http://<DOCKER_HOST_IP>:3300`)
+- **Grafana**: `https://grafana.iye.internal` (or direct: `http://<DOCKER_HOST_IP>:3000`)
+- **Prometheus**: `https://prometheus.iye.internal` (or direct: `http://<DOCKER_HOST_IP>:9090`)
+- **Oxidized**: `https://oxidized.iye.internal` (or direct: `http://<DOCKER_HOST_IP>:8888`)
+- **Trivy**: `https://trivy.iye.internal` (or direct: `http://<DOCKER_HOST_IP>:4954`)
+
+---
+
+## Connecting Oxidized to LibreNMS
+Once LibreNMS has discovered your switches and APs:
+1. In LibreNMS, go to `https://librenms.iye.internal/api-access/` and generate an API Token.
+2. Edit [oxidized/config](oxidized/config#L68) and set `X-Auth-Token` to that token.
+3. In LibreNMS &rarr; **Global Settings** &rarr; **External** &rarr; **Oxidized**:
+   - Enable Oxidized Support: **ON**
+   - URL: `http://librenms_oxidized:8888`
+   - Config Versioning: **ON**
+   - Reload nodes list each time a device is added: **ON**
+4. All your MikroTik switches and OpenWrt APs will automatically have their configurations backed up, diffed, and versioned in Git.

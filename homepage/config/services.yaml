@@ -1,0 +1,89 @@
+---
+# Homepage Services Configuration
+# Reference: https://gethomepage.dev/configs/services/
+
+- Network & Monitoring:
+    - LibreNMS:
+        icon: librenms
+        href: https://librenms.{{HOMEPAGE_VAR_DOMAIN:-homelab.local}}
+        description: Central SNMP Monitoring & Discovery
+        server: my-docker
+        container: librenms
+    - Oxidized:
+        icon: oxidized
+        href: https://oxidized.{{HOMEPAGE_VAR_DOMAIN:-homelab.local}}
+        description: Automated RouterOS & OpenWrt Git Backups
+        server: my-docker
+        container: librenms_oxidized
+    - Grafana:
+        icon: grafana
+        href: https://grafana.{{HOMEPAGE_VAR_DOMAIN:-homelab.local}}
+        description: Telemetry Dashboards & Visualization
+        server: my-docker
+        container: grafana
+    - Prometheus:
+        icon: prometheus
+        href: https://prometheus.{{HOMEPAGE_VAR_DOMAIN:-homelab.local}}
+        description: Time-Series Metrics & Alerting Engine
+        server: my-docker
+        container: prometheus
+
+- Virtualization & Servers:
+    - Proxmox VE:
+        icon: proxmox
+        href: https://{{HOMEPAGE_VAR_PROXMOX_HOST:-192.168.1.10}}:8006
+        description: Hypervisor & Virtualization Cluster
+        # Optional live widget:
+        # widget:
+        #   type: proxmox
+        #   url: https://{{HOMEPAGE_VAR_PROXMOX_HOST:-192.168.1.10}}:8006
+        #   username: root@pam
+        #   password: your_proxmox_password
+    - Portainer:
+        icon: portainer
+        href: https://{{HOMEPAGE_VAR_PORTAINER_HOST:-192.168.1.10}}:9443
+        description: Docker & Stack Management
+
+- Network Switches (MikroTik):
+    - MikroTik Core Switch:
+        icon: mikrotik
+        href: http://{{HOMEPAGE_VAR_MIKROTIK_CORE_HOST:-192.168.1.2}}
+        description: Core Switch (RouterOS / WebFig)
+    - MikroTik Distribution Switch:
+        icon: mikrotik
+        href: http://{{HOMEPAGE_VAR_MIKROTIK_SW2_HOST:-192.168.1.3}}
+        description: Distribution / PoE Switch
+    # Add more switches as needed:
+    # - MikroTik Edge Switch:
+    #     icon: mikrotik
+    #     href: http://192.168.1.4
+    #     description: Edge / Office Switch
+
+- Wireless Access Points (OpenWrt):
+    - OpenWrt AP 1:
+        icon: openwrt
+        href: http://{{HOMEPAGE_VAR_OPENWRT_AP1_HOST:-192.168.1.11}}
+        description: Main / Living Room AP (LuCI)
+    - OpenWrt AP 2:
+        icon: openwrt
+        href: http://{{HOMEPAGE_VAR_OPENWRT_AP2_HOST:-192.168.1.12}}
+        description: Office / Upstairs AP (LuCI)
+    # Add more access points as needed:
+    # - OpenWrt AP 3:
+    #     icon: openwrt
+    #     href: http://192.168.1.13
+    #     description: Outdoor / Garage AP
+
+- Security & Operations:
+    - Caddy:
+        icon: caddy
+        href: https://{{HOMEPAGE_VAR_DOMAIN:-homelab.local}}
+        description: Ingress Gateway & TLS Reverse Proxy
+        server: my-docker
+        container: homelab_caddy
+    - Trivy:
+        icon: trivy
+        href: https://trivy.{{HOMEPAGE_VAR_DOMAIN:-homelab.local}}
+        description: Container & Filesystem Vulnerability Scanner
+        server: my-docker
+        container: trivy

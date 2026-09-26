@@ -1,0 +1,21 @@
+# Local environment secrets
+.env
+stack.env
+*.env.local
+
+# Oxidized runtime files (if mounted locally)
+oxidized/pid
+oxidized/crashes
+oxidized/oxidized.git
+oxidized/configs
+
+# Root temporary/runtime data
+/data/
+/config/
+
+# OS and Editor files
+.DS_Store
+*.swp
+*~
+.idea/
+.vscode/
