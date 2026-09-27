@@ -1,6 +1,6 @@
 # Homelab Operations Stack
 
-A production-ready [Portainer](https://www.portainer.io/) and Docker Compose stack specifically architected for homelabs running **multiple MikroTik switches**, **Proxmox VE servers**, and **multiple OpenWrt access points**.
+A production-ready [Portainer](https://www.portainer.io/) and Docker Compose stack specifically architected for homelabs running **multiple MikroTik switches**, **3 Proxmox VE servers**, and **multiple OpenWrt access points**.
 
 This stack provides centralized network monitoring, automated configuration versioning, telemetry metrics, visualization dashboards, unified reverse proxying with local TLS, automated vulnerability scanning, and an interactive **Homepage** status dashboard.
 
@@ -38,7 +38,7 @@ This stack provides centralized network monitoring, automated configuration vers
                                        v                                 v               v
                              +-------------------+             +------------------+ +-------------------+
                              | MikroTik Switches |             |   Proxmox VE     | |  OpenWrt APs      |
-                             | (Core, PoE, Edge) |             |  (Hypervisors)   | | (Living Rm, Office|
+                             | (Core, PoE, Edge) |             |  (3 PVE Nodes)   | | (Living Rm, Office|
                              +-------------------+             +------------------+ +-------------------+
 ```
 
@@ -62,73 +62,107 @@ This stack provides centralized network monitoring, automated configuration vers
 
 ---
 
-## Scaling to Multiple Switches & APs
+## DNS Configuration Reference
 
-This stack is designed from the ground up to scale effortlessly across multiple devices:
+To access all services by hostname and allow devices to communicate across the `.iye.internal` domain, configure the following DNS records in your local resolver (Pi-hole, AdGuard Home, pfSense/OPNsense Unbound, or MikroTik DNS):
 
-### 1. Automatic Discovery in LibreNMS
-Rather than adding each switch and access point manually:
-1. In LibreNMS, navigate to **Settings (Gear icon)** &rarr; **Global Settings** &rarr; **Discovery** &rarr; **Subnets**.
-2. Add your management subnet (e.g., `192.168.1.0/24`).
-3. Under **Poller** &rarr; **Communities**, add your SNMP community (default: `homelab`).
-4. LibreNMS will automatically scan the subnet, discover every switch and AP, and map inter-switch and AP links using **LLDP/CDP**!
+### 1. Stack Service Records (Point to Docker Host IP)
+All HTTP/HTTPS requests to these URLs are intercepted by **Caddy** on ports 80/443 and routed to the proper container:
 
-### 2. Automated Multi-Device Backups in Oxidized
-Oxidized does **not** need manual IP configuration for each device:
-- It queries LibreNMS's API (`/api/v0/oxidized`) dynamically.
-- When you add 5 switches and 10 APs to LibreNMS, LibreNMS hands the entire list to Oxidized.
-- Oxidized matches all MikroTik devices to `model: routeros` and all APs to `model: openwrt`, connects via SSH, and commits every device's configuration to Git separately (`<hostname>.cfg`).
+| Hostname / FQDN | Record Type | Target IP | Destination Service |
+| :--- | :---: | :---: | :--- |
+| **`homelab.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | **Homepage Operations Dashboard** |
+| **`iye.internal`** | `A` | `<DOCKER_HOST_IP>` | Homepage Dashboard (Apex domain fallback) |
+| **`librenms.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | LibreNMS Web UI |
+| **`grafana.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Grafana Telemetry Dashboards |
+| **`prometheus.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Prometheus Web UI & Scrape Engine |
+| **`oxidized.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Oxidized Web UI & REST API |
+| **`trivy.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Trivy Security Scanner API |
 
-### 3. Multi-Device Metrics in Prometheus
-In [prometheus/prometheus.yml](prometheus/prometheus.yml), you can add any number of target IPs:
-```yaml
-  - job_name: "mikrotik"
-    static_configs:
-      - targets:
-          - "192.168.1.2:80"   # Core Switch
-          - "192.168.1.3:80"   # Distribution / PoE Switch
-          - "192.168.1.4:80"   # Edge Switch
-
-  - job_name: "openwrt"
-    static_configs:
-      - targets:
-          - "192.168.1.11:9100"  # AP Living Room
-          - "192.168.1.12:9100"  # AP Office
-          - "192.168.1.13:9100"  # AP Garage / Outdoor
-```
-
-### 4. Dedicated Sections in Homepage
-In [homepage/config/services.yaml](homepage/config/services.yaml), switches and APs are organized into their own clean grid categories (**Network Switches** and **Wireless Access Points**), providing one-click access to each device's WebFig or LuCI interface.
+> **Wildcard Shortcut**: If your DNS server supports wildcards, you can create a single wildcard entry: `*.iye.internal` &rarr; `<DOCKER_HOST_IP>`.
 
 ---
 
-## Device Setup Commands
+### 2. Physical Host & Device Records (Point to Device LAN IPs)
+These records allow LibreNMS, Prometheus, and Homepage to reach your physical hardware by name:
 
-### MikroTik Switches (RouterOS)
-Run on each of your MikroTik switches:
+| Hostname / FQDN | Target IP (Example) | Device Role | Web Interface Port |
+| :--- | :--- | :--- | :--- |
+| **`pve1.iye.internal`** | `192.168.1.10` | Proxmox VE Node 1 | `8006` (HTTPS) |
+| **`pve2.iye.internal`** | `192.168.1.11` | Proxmox VE Node 2 | `8006` (HTTPS) |
+| **`pve3.iye.internal`** | `192.168.1.12` | Proxmox VE Node 3 | `8006` (HTTPS) |
+| **`portainer.iye.internal`** | `192.168.1.10` | Portainer CE Server | `9443` (HTTPS) |
+| **`sw-core.iye.internal`** | `192.168.1.2` | MikroTik Core Switch | `80` (WebFig / RouterOS) |
+| **`sw-poe.iye.internal`** | `192.168.1.3` | MikroTik PoE / Distribution Switch | `80` (WebFig / SwOS) |
+| **`ap-livingroom.iye.internal`** | `192.168.1.11` | OpenWrt AP 1 (Living Room) | `80` (LuCI) |
+| **`ap-office.iye.internal`** | `192.168.1.12` | OpenWrt AP 2 (Office / Upstairs) | `80` (LuCI) |
+
+#### Example `/etc/hosts` Block (for local testing):
+```hosts
+# Homelab Services (Docker Host)
+192.168.1.50  homelab.iye.internal iye.internal librenms.iye.internal grafana.iye.internal prometheus.iye.internal oxidized.iye.internal trivy.iye.internal
+
+# Homelab Devices
+192.168.1.10  pve1.iye.internal portainer.iye.internal
+192.168.1.11  pve2.iye.internal
+192.168.1.12  pve3.iye.internal
+192.168.1.2   sw-core.iye.internal
+192.168.1.3   sw-poe.iye.internal
+192.168.1.11  ap-livingroom.iye.internal
+192.168.1.12  ap-office.iye.internal
+```
+
+---
+
+## Host & Device Setup Commands
+
+### 1. Proxmox VE (Run on all 3 PVE Nodes)
+SSH into **each** of your 3 Proxmox nodes (`pve1`, `pve2`, `pve3`) and run:
+
+```bash
+# A. Install Prometheus Node Exporter (System CPU, RAM, Disk, Network)
+apt update && apt install -y prometheus-node-exporter
+systemctl enable --now prometheus-node-exporter
+
+# B. Install and Configure SNMP for LibreNMS
+apt install -y snmpd
+echo "rocommunity homelab <DOCKER_HOST_IP>" >> /etc/snmp/snmpd.conf
+systemctl restart snmpd
+
+# C. Forward Syslog to LibreNMS Syslog-NG Container
+echo "*.* @<DOCKER_HOST_IP>:514" > /etc/rsyslog.d/50-remote.conf
+systemctl restart rsyslog
+```
+
+---
+
+### 2. MikroTik Switches (Run on each switch via RouterOS Terminal)
+Connect via SSH or WebFig terminal to each switch:
+
 ```routeros
-# Enable SNMP
+# A. Enable SNMP for LibreNMS
 /snmp community set [ find default=yes ] name=homelab addresses=0.0.0.0/0
 /snmp set enabled=yes contact="admin@iye.internal" location="Rack"
 
-# Forward Syslog to Docker Host
+# B. Forward Syslog to Stack
 /system logging action add name=librenms target=remote remote=<DOCKER_HOST_IP> remote-port=514 src-address=0.0.0.0
 /system logging add action=librenms topics=info,warning,error
 
-# Enable Native Prometheus Metrics (RouterOS v7)
+# C. Enable Native Prometheus Exporter (RouterOS v7)
 /tool metrics export prometheus
 
-# Create Oxidized Backup User
+# D. Create Oxidized Backup User
 /user group add name=oxidized policy=read,api,test,ssh
 /user add name=oxidized group=oxidized password="StrongPassword123!"
 ```
 
 ---
 
-### OpenWrt Access Points
-Run on each of your OpenWrt APs via SSH:
+### 3. OpenWrt Access Points (Run on each AP via SSH)
+SSH into each OpenWrt AP:
+
 ```sh
-# 1. Install Prometheus Node Exporter (WiFi + System Telemetry)
+# A. Install Prometheus Node Exporter with WiFi Telemetry
 opkg update
 opkg install prometheus-node-exporter-lua \
              prometheus-node-exporter-lua-wifi \
@@ -137,7 +171,7 @@ opkg install prometheus-node-exporter-lua \
 /etc/init.d/prometheus-node-exporter-lua enable
 /etc/init.d/prometheus-node-exporter-lua start
 
-# 2. Enable SNMP for LibreNMS
+# B. Enable SNMP for LibreNMS
 opkg install snmpd
 uci set snmpd.@agent[0].agentaddress='UDP:161'
 uci delete snmpd.public
@@ -147,7 +181,7 @@ uci commit snmpd
 /etc/init.d/snmpd enable
 /etc/init.d/snmpd restart
 
-# 3. Forward Syslog to Docker Host
+# C. Forward Syslog to Stack
 uci set system.@system[0].log_ip='<DOCKER_HOST_IP>'
 uci set system.@system[0].log_port='514'
 uci set system.@system[0].log_proto='udp'
@@ -157,64 +191,46 @@ uci commit system
 
 ---
 
-### Proxmox VE
-Run on your Proxmox server(s):
-```bash
-# Prometheus Node Exporter
-apt update && apt install -y prometheus-node-exporter
-systemctl enable --now prometheus-node-exporter
-
-# SNMP for LibreNMS
-apt install -y snmpd
-echo "rocommunity homelab <DOCKER_HOST_IP>" >> /etc/snmp/snmpd.conf
-systemctl restart snmpd
-
-# Syslog Forwarding
-echo "*.* @<DOCKER_HOST_IP>:514" > /etc/rsyslog.d/50-remote.conf
-systemctl restart rsyslog
-```
+### 4. Docker Host DNS Settings
+To guarantee that your Docker containers (like Prometheus, LibreNMS, and Oxidized) can resolve `.iye.internal` hostnames:
+1. Ensure the Docker host's `/etc/resolv.conf` lists your local LAN DNS server (e.g. your router or Pi-hole IP).
+2. Docker containers automatically inherit the host's DNS servers.
 
 ---
 
 ## Deployment via Portainer
 
-1. Push your changes to your repository:
-   ```bash
-   git add .
-   git commit -m "Configure multi-device monitoring, Caddy, and Homepage"
-   git push origin main
+### Fresh Stack Creation (Recommended)
+
+1. Log into **Portainer**.
+2. Go to **Stacks** &rarr; click **+ Add stack**.
+3. Select **Repository** mode:
+   - **Name**: `homelab`
+   - **Repository URL**: `https://github.com/1rhoads/homelab.git`
+   - **Repository reference**: `refs/heads/main`
+   - **Compose path**: `compose.yml`
+4. Under **Environment variables**, paste your settings:
+   ```ini
+   DOMAIN=iye.internal
+   PROXMOX_NODE1_HOST=pve1.iye.internal
+   PROXMOX_NODE2_HOST=pve2.iye.internal
+   PROXMOX_NODE3_HOST=pve3.iye.internal
+   PORTAINER_HOST=portainer.iye.internal
+   MIKROTIK_CORE_HOST=sw-core.iye.internal
+   MIKROTIK_SW2_HOST=sw-poe.iye.internal
+   OPENWRT_AP1_HOST=ap-livingroom.iye.internal
+   OPENWRT_AP2_HOST=ap-office.iye.internal
+   MYSQL_PASSWORD=your_secure_password
+   GRAFANA_ADMIN_PASSWORD=your_secure_password
    ```
-2. In **Portainer**, navigate to **Stacks** &rarr; select **homelab**.
-3. Under **Environment variables**, set:
-   - `DOMAIN`: `iye.internal`
-   - `PROXMOX_NODE1_HOST`: `<PROXMOX_NODE1_IP>`
-   - `PROXMOX_NODE2_HOST`: `<PROXMOX_NODE2_IP>`
-   - `PROXMOX_NODE3_HOST`: `<PROXMOX_NODE3_IP>`
-   - `MIKROTIK_CORE_HOST`: `<CORE_SWITCH_IP>`
-   - `MIKROTIK_SW2_HOST`: `<SWITCH_2_IP>`
-   - `OPENWRT_AP1_HOST`: `<AP_1_IP>`
-   - `OPENWRT_AP2_HOST`: `<AP_2_IP>`
-   - `MYSQL_PASSWORD`: `<YOUR_PASSWORD>`
-   - `GRAFANA_ADMIN_PASSWORD`: `<YOUR_PASSWORD>`
-4. Click **Pull and redeploy** with **Re-pull image** toggled on.
+5. Click **Deploy the stack**.
 
 ---
 
-## Service URLs
+## Post-Deployment: Connecting Oxidized to LibreNMS
 
-With `DOMAIN=iye.internal` configured:
-- **Homepage Dashboard**: `https://homelab.iye.internal` (or `https://iye.internal`)
-- **LibreNMS**: `https://librenms.iye.internal` (or direct: `http://<DOCKER_HOST_IP>:3300`)
-- **Grafana**: `https://grafana.iye.internal` (or direct: `http://<DOCKER_HOST_IP>:3000`)
-- **Prometheus**: `https://prometheus.iye.internal` (or direct: `http://<DOCKER_HOST_IP>:9090`)
-- **Oxidized**: `https://oxidized.iye.internal` (or direct: `http://<DOCKER_HOST_IP>:8888`)
-- **Trivy**: `https://trivy.iye.internal` (or direct: `http://<DOCKER_HOST_IP>:4954`)
-
----
-
-## Connecting Oxidized to LibreNMS
 Once LibreNMS has discovered your switches and APs:
-1. In LibreNMS, go to `https://librenms.iye.internal/api-access/` and generate an API Token.
+1. In LibreNMS, navigate to `https://librenms.iye.internal/api-access/` and generate an API Token.
 2. Edit [oxidized/config](oxidized/config#L68) and set `X-Auth-Token` to that token.
 3. In LibreNMS &rarr; **Global Settings** &rarr; **External** &rarr; **Oxidized**:
    - Enable Oxidized Support: **ON**
@@ -222,3 +238,30 @@ Once LibreNMS has discovered your switches and APs:
    - Config Versioning: **ON**
    - Reload nodes list each time a device is added: **ON**
 4. All your MikroTik switches and OpenWrt APs will automatically have their configurations backed up, diffed, and versioned in Git.
+
+---
+
+## Maintenance & Operations
+
+### View Service Logs
+```bash
+# View all logs
+docker compose logs -f
+
+# View specific service logs
+docker compose logs -f caddy
+docker compose logs -f homepage
+docker compose logs -f librenms
+docker compose logs -f oxidized
+docker compose logs -f prometheus
+```
+
+### Reload Prometheus Scrape Targets
+```bash
+curl -X POST http://<DOCKER_HOST_IP>:9090/-/reload
+```
+
+---
+
+## License
+MIT License. Free to use, adapt, and share in your homelab.
