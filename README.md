@@ -129,9 +129,10 @@ apt install -y snmpd
 echo "rocommunity homelab <DOCKER_HOST_IP>" >> /etc/snmp/snmpd.conf
 systemctl restart snmpd
 
-# C. Forward Syslog to LibreNMS Syslog-NG Container
+# C. Install rsyslog and Forward Logs to LibreNMS Syslog-NG Container
+apt install -y rsyslog
 echo "*.* @<DOCKER_HOST_IP>:514" > /etc/rsyslog.d/50-remote.conf
-systemctl restart rsyslog
+systemctl enable --now rsyslog
 ```
 
 ---
