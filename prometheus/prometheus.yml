@@ -17,13 +17,14 @@ scrape_configs:
       - targets: ["caddy:2019"]
 
   # Proxmox VE Nodes (via node_exporter port 9100 or proxmox-pve-exporter port 9221)
+  # You can use hostnames (e.g. pve1.iye.internal) or static IPs!
   - job_name: "proxmox"
     scrape_interval: 15s
     static_configs:
       - targets:
-          # - "192.168.1.10:9100"   # PVE Node 1
-          # - "192.168.1.11:9100"   # PVE Node 2
-          # - "192.168.1.12:9100"   # PVE Node 3
+          # - "pve1.iye.internal:9100"   # PVE Node 1 (or 192.168.1.10:9100)
+          # - "pve2.iye.internal:9100"   # PVE Node 2 (or 192.168.1.11:9100)
+          # - "pve3.iye.internal:9100"   # PVE Node 3 (or 192.168.1.12:9100)
         labels:
           role: "hypervisor"
           platform: "proxmox"
@@ -34,9 +35,9 @@ scrape_configs:
     metrics_path: /metrics
     static_configs:
       - targets:
-          # - "192.168.1.2:80"      # Switch 1 (Core)
-          # - "192.168.1.3:80"      # Switch 2 (Distribution / PoE)
-          # - "192.168.1.4:80"      # Switch 3 (Edge)
+          # - "sw-core.iye.internal:80"  # Switch 1 (Core)
+          # - "sw-poe.iye.internal:80"   # Switch 2 (Distribution / PoE)
+          # - "sw-edge.iye.internal:80"  # Switch 3 (Edge)
         labels:
           role: "switch"
           vendor: "mikrotik"
@@ -46,9 +47,9 @@ scrape_configs:
     scrape_interval: 30s
     static_configs:
       - targets:
-          # - "192.168.1.11:9100"   # OpenWrt AP 1 (Living Room)
-          # - "192.168.1.12:9100"   # OpenWrt AP 2 (Office / Upper)
-          # - "192.168.1.13:9100"   # OpenWrt AP 3 (Outdoor / Garage)
+          # - "ap-livingroom.iye.internal:9100"  # OpenWrt AP 1
+          # - "ap-office.iye.internal:9100"      # OpenWrt AP 2
+          # - "ap-garage.iye.internal:9100"      # OpenWrt AP 3
         labels:
           role: "access_point"
           vendor: "openwrt"
@@ -58,6 +59,6 @@ scrape_configs:
     scrape_interval: 15s
     static_configs:
       - targets:
-          # - "192.168.1.20:9100"
+          # - "server1.iye.internal:9100"
         labels:
           role: "server"
