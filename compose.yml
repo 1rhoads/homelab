@@ -89,6 +89,10 @@ services:
     image: crazymax/msmtpd:latest
     container_name: librenms_msmtpd
     restart: always
+    environment:
+      - "TZ=${TZ:-UTC}"
+      - "SMTP_HOST=${SMTP_HOST:-localhost}"
+      - "SMTP_PORT=${SMTP_PORT:-25}"
     env_file:
       - path: .env
         required: false
@@ -253,9 +257,10 @@ services:
       - "8888:8888"
     environment:
       - "CONFIG_RELOAD_INTERVAL=600"
+      - "OXIDIZED_HOME=/etc/oxidized"
     volumes:
       - oxidized-data:/home/oxidized/.config/oxidized
-      - ./oxidized/config:/home/oxidized/.config/oxidized/config
+      - ./oxidized:/etc/oxidized:ro
     depends_on:
       - librenms
 
