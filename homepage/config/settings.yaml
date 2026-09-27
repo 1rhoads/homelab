@@ -14,7 +14,7 @@ layout:
     columns: 4
   Virtualization & Servers:
     style: row
-    columns: 3
+    columns: 4
   Network Switches (MikroTik):
     style: row
     columns: 3

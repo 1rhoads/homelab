@@ -29,14 +29,37 @@
         container: prometheus
 
 - Virtualization & Servers:
-    - Proxmox VE:
+    - Proxmox PVE 1:
         icon: proxmox
-        href: https://{{HOMEPAGE_VAR_PROXMOX_HOST:-192.168.1.10}}:8006
-        description: Hypervisor & Virtualization Cluster
+        href: https://{{HOMEPAGE_VAR_PROXMOX_NODE1_HOST:-192.168.1.10}}:8006
+        description: Proxmox Hypervisor Node 1
         # Optional live widget:
         # widget:
         #   type: proxmox
-        #   url: https://{{HOMEPAGE_VAR_PROXMOX_HOST:-192.168.1.10}}:8006
+        #   url: https://{{HOMEPAGE_VAR_PROXMOX_NODE1_HOST:-192.168.1.10}}:8006
+        #   node: pve1
+        #   username: root@pam
+        #   password: your_proxmox_password
+    - Proxmox PVE 2:
+        icon: proxmox
+        href: https://{{HOMEPAGE_VAR_PROXMOX_NODE2_HOST:-192.168.1.11}}:8006
+        description: Proxmox Hypervisor Node 2
+        # Optional live widget:
+        # widget:
+        #   type: proxmox
+        #   url: https://{{HOMEPAGE_VAR_PROXMOX_NODE2_HOST:-192.168.1.11}}:8006
+        #   node: pve2
+        #   username: root@pam
+        #   password: your_proxmox_password
+    - Proxmox PVE 3:
+        icon: proxmox
+        href: https://{{HOMEPAGE_VAR_PROXMOX_NODE3_HOST:-192.168.1.12}}:8006
+        description: Proxmox Hypervisor Node 3
+        # Optional live widget:
+        # widget:
+        #   type: proxmox
+        #   url: https://{{HOMEPAGE_VAR_PROXMOX_NODE3_HOST:-192.168.1.12}}:8006
+        #   node: pve3
         #   username: root@pam
         #   password: your_proxmox_password
     - Portainer:

@@ -187,7 +187,9 @@ systemctl restart rsyslog
 2. In **Portainer**, navigate to **Stacks** &rarr; select **homelab**.
 3. Under **Environment variables**, set:
    - `DOMAIN`: `iye.internal`
-   - `PROXMOX_HOST`: `<PROXMOX_IP>`
+   - `PROXMOX_NODE1_HOST`: `<PROXMOX_NODE1_IP>`
+   - `PROXMOX_NODE2_HOST`: `<PROXMOX_NODE2_IP>`
+   - `PROXMOX_NODE3_HOST`: `<PROXMOX_NODE3_IP>`
    - `MIKROTIK_CORE_HOST`: `<CORE_SWITCH_IP>`
    - `MIKROTIK_SW2_HOST`: `<SWITCH_2_IP>`
    - `OPENWRT_AP1_HOST`: `<AP_1_IP>`
