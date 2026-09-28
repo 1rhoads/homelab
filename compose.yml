@@ -265,12 +265,18 @@ services:
       - "8888:8888"
     environment:
       - "CONFIG_RELOAD_INTERVAL=600"
-      - "OXIDIZED_HOME=/etc/oxidized"
     configs:
       - source: oxidized_config
         target: /etc/oxidized/config
     volumes:
       - oxidized-data:/home/oxidized/.config/oxidized
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        mkdir -p /home/oxidized/.config/oxidized &&
+        cp /etc/oxidized/config /home/oxidized/.config/oxidized/config &&
+        chown -R oxidized:oxidized /home/oxidized/.config/oxidized &&
+        exec gosu oxidized oxidized
     depends_on:
       - librenms
 
