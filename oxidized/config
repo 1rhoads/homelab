@@ -32,6 +32,8 @@ models:
         - /etc/dropbear/dropbear_ed25519_host_key
         - /etc/dropbear/dropbear_ecdsa_host_key
         - /etc/dropbear/dropbear_dss_host_key
+        - /etc/uhttpd.crt
+        - /etc/uhttpd.key
     #   ssh_keys: /home/oxidized/.config/oxidized/id_rsa
 
 pid: "/home/oxidized/.config/oxidized/pid"
