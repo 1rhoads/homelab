@@ -30,8 +30,6 @@ services:
       - "3001:3000"
     environment:
       - "TZ=${TZ:-UTC}"
-      - "PUID=${PUID:-1000}"
-      - "PGID=${PGID:-1000}"
       - "HOMEPAGE_ALLOWED_HOSTS=${HOMEPAGE_ALLOWED_HOSTS:-*}"
       - "HOMEPAGE_VAR_DOMAIN=${DOMAIN:-iye.internal}"
       - "HOMEPAGE_VAR_PROXMOX_NODE1_HOST=${PROXMOX_NODE1_HOST:-pve1.iye.internal}"
