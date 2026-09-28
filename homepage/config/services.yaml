@@ -31,71 +31,56 @@
 - Virtualization & Servers:
     - Proxmox PVE 1:
         icon: proxmox
-        href: https://{{HOMEPAGE_VAR_PROXMOX_NODE1_HOST:-pve1.iye.internal}}:8006
-        description: Proxmox Hypervisor Node 1
-        # Optional live widget:
-        # widget:
-        #   type: proxmox
-        #   url: https://{{HOMEPAGE_VAR_PROXMOX_NODE1_HOST:-pve1.iye.internal}}:8006
-        #   node: pve1
-        #   username: root@pam
-        #   password: your_proxmox_password
+        href: https://{{HOMEPAGE_VAR_PROXMOX_NODE1_HOST:-virt-1.iye.internal}}:8006
+        description: Proxmox Hypervisor Node 1 (virt-1)
     - Proxmox PVE 2:
         icon: proxmox
-        href: https://{{HOMEPAGE_VAR_PROXMOX_NODE2_HOST:-pve2.iye.internal}}:8006
-        description: Proxmox Hypervisor Node 2
-        # Optional live widget:
-        # widget:
-        #   type: proxmox
-        #   url: https://{{HOMEPAGE_VAR_PROXMOX_NODE2_HOST:-pve2.iye.internal}}:8006
-        #   node: pve2
-        #   username: root@pam
-        #   password: your_proxmox_password
+        href: https://{{HOMEPAGE_VAR_PROXMOX_NODE2_HOST:-virt-2.iye.internal}}:8006
+        description: Proxmox Hypervisor Node 2 (virt-2)
     - Proxmox PVE 3:
         icon: proxmox
-        href: https://{{HOMEPAGE_VAR_PROXMOX_NODE3_HOST:-pve3.iye.internal}}:8006
-        description: Proxmox Hypervisor Node 3
-        # Optional live widget:
-        # widget:
-        #   type: proxmox
-        #   url: https://{{HOMEPAGE_VAR_PROXMOX_NODE3_HOST:-pve3.iye.internal}}:8006
-        #   node: pve3
-        #   username: root@pam
-        #   password: your_proxmox_password
+        href: https://{{HOMEPAGE_VAR_PROXMOX_NODE3_HOST:-virt-3.iye.internal}}:8006
+        description: Proxmox Hypervisor Node 3 (virt-3)
     - Portainer:
         icon: portainer
-        href: https://{{HOMEPAGE_VAR_PORTAINER_HOST:-portainer.iye.internal}}:9443
+        href: https://{{HOMEPAGE_VAR_PORTAINER_HOST:-docker-homelab.iye.internal}}:9443
         description: Docker & Stack Management
 
 - Network Switches (MikroTik):
-    - MikroTik Core Switch:
+    - MikroTik Switch 1:
         icon: mikrotik
-        href: http://{{HOMEPAGE_VAR_MIKROTIK_CORE_HOST:-sw-core.iye.internal}}
-        description: Core Switch (RouterOS / WebFig)
-    - MikroTik Distribution Switch:
+        href: http://{{HOMEPAGE_VAR_MIKROTIK_CORE_HOST:-switch-1.iye.internal}}
+        description: Core Switch 1 (RouterOS / WebFig)
+    - MikroTik Switch 2:
         icon: mikrotik
-        href: http://{{HOMEPAGE_VAR_MIKROTIK_SW2_HOST:-sw-poe.iye.internal}}
-        description: Distribution / PoE Switch
-    # Add more switches as needed:
-    # - MikroTik Edge Switch:
-    #     icon: mikrotik
-    #     href: http://sw-edge.iye.internal
-    #     description: Edge / Office Switch
+        href: http://{{HOMEPAGE_VAR_MIKROTIK_SW2_HOST:-switch-2.iye.internal}}
+        description: Switch 2 (RouterOS / WebFig)
 
 - Wireless Access Points (OpenWrt):
-    - OpenWrt AP 1:
+    - OpenWrt Outside AP:
         icon: openwrt
-        href: http://{{HOMEPAGE_VAR_OPENWRT_AP1_HOST:-ap-livingroom.iye.internal}}
-        description: Main / Living Room AP (LuCI)
-    - OpenWrt AP 2:
+        href: http://{{HOMEPAGE_VAR_OPENWRT_AP1_HOST:-ap-outside.iye.internal}}
+        description: Outside AP (LuCI)
+    - OpenWrt Callie AP:
         icon: openwrt
-        href: http://{{HOMEPAGE_VAR_OPENWRT_AP2_HOST:-ap-office.iye.internal}}
-        description: Office / Upstairs AP (LuCI)
-    # Add more access points as needed:
-    # - OpenWrt AP 3:
-    #     icon: openwrt
-    #     href: http://ap-garage.iye.internal
-    #     description: Outdoor / Garage AP
+        href: http://{{HOMEPAGE_VAR_OPENWRT_AP2_HOST:-ap-callie.iye.internal}}
+        description: Callie AP (LuCI)
+    - OpenWrt Robert AP:
+        icon: openwrt
+        href: http://{{HOMEPAGE_VAR_OPENWRT_AP3_HOST:-ap-robert.iye.internal}}
+        description: Robert AP (LuCI)
+    - OpenWrt Garage AP:
+        icon: openwrt
+        href: http://{{HOMEPAGE_VAR_OPENWRT_AP4_HOST:-ap-garage.iye.internal}}
+        description: Garage AP (LuCI)
+    - OpenWrt Printer AP:
+        icon: openwrt
+        href: http://{{HOMEPAGE_VAR_OPENWRT_AP5_HOST:-ap-printer.iye.internal}}
+        description: Printer AP (LuCI)
+    - OpenWrt Fort AP:
+        icon: openwrt
+        href: http://{{HOMEPAGE_VAR_OPENWRT_AP6_HOST:-ap-fort.iye.internal}}
+        description: Fort AP (LuCI)
 
 - Security & Operations:
     - Caddy:
