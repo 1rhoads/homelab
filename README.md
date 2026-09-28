@@ -38,7 +38,7 @@ This stack provides centralized network monitoring, automated configuration vers
                                        v                                 v               v
                              +-------------------+             +------------------+ +-------------------+
                              | MikroTik Switches |             |   Proxmox VE     | |  OpenWrt APs      |
-                             | (Core, PoE, Edge) |             |  (3 PVE Nodes)   | | (Living Rm, Office|
+                             | (switch-1, 2)     |             | (virt-1, 2, 3)   | | (6 AP Nodes)      |
                              +-------------------+             +------------------+ +-------------------+
 ```
 
@@ -86,30 +86,38 @@ All HTTP/HTTPS requests to these URLs are intercepted by **Caddy** on ports 80/4
 ### 2. Physical Host & Device Records (Point to Device LAN IPs)
 These records allow LibreNMS, Prometheus, and Homepage to reach your physical hardware by name:
 
-| Hostname / FQDN | Target IP (Example) | Device Role | Web Interface Port |
+| Hostname / FQDN | Target IP (Verified) | Device Role | Web Interface Port |
 | :--- | :--- | :--- | :--- |
-| **`pve1.iye.internal`** | `192.168.1.10` | Proxmox VE Node 1 | `8006` (HTTPS) |
-| **`pve2.iye.internal`** | `192.168.1.11` | Proxmox VE Node 2 | `8006` (HTTPS) |
-| **`pve3.iye.internal`** | `192.168.1.12` | Proxmox VE Node 3 | `8006` (HTTPS) |
-| **`portainer.iye.internal`** | `192.168.1.10` | Portainer CE Server | `9443` (HTTPS) |
-| **`sw-core.iye.internal`** | `192.168.1.2` | MikroTik Core Switch | `80` (WebFig / RouterOS) |
-| **`sw-poe.iye.internal`** | `192.168.1.3` | MikroTik PoE / Distribution Switch | `80` (WebFig / SwOS) |
-| **`ap-livingroom.iye.internal`** | `192.168.1.11` | OpenWrt AP 1 (Living Room) | `80` (LuCI) |
-| **`ap-office.iye.internal`** | `192.168.1.12` | OpenWrt AP 2 (Office / Upstairs) | `80` (LuCI) |
+| **`virt-1.iye.internal`** | `192.168.254.111` | Proxmox VE Node 1 | `8006` (HTTPS) |
+| **`virt-2.iye.internal`** | `192.168.254.112` | Proxmox VE Node 2 | `8006` (HTTPS) |
+| **`virt-3.iye.internal`** | `192.168.254.113` | Proxmox VE Node 3 | `8006` (HTTPS) |
+| **`docker-homelab.iye.internal`** | `192.168.254.164` | Docker Host & Portainer | `9443` (HTTPS) |
+| **`switch-1.iye.internal`** | `<SWITCH_1_IP>` | MikroTik Core Switch | `80` (WebFig / RouterOS) |
+| **`switch-2.iye.internal`** | `<SWITCH_2_IP>` | MikroTik Distribution Switch | `80` (WebFig / SwOS) |
+| **`ap-outside.iye.internal`** | `192.168.0.44` | OpenWrt AP (Outside) | `80` (LuCI) |
+| **`ap-callie.iye.internal`** | `192.168.0.42` | OpenWrt AP (Callie) | `80` (LuCI) |
+| **`ap-robert.iye.internal`** | `192.168.0.47` | OpenWrt AP (Robert) | `80` (LuCI) |
+| **`ap-garage.iye.internal`** | `192.168.0.41` | OpenWrt AP (Garage) | `80` (LuCI) |
+| **`ap-printer.iye.internal`** | `192.168.0.45` | OpenWrt AP (Printer) | `80` (LuCI) |
+| **`ap-fort.iye.internal`** | `192.168.0.46` | OpenWrt AP (Fort) | `80` (LuCI) |
 
 #### Example `/etc/hosts` Block (for local testing):
 ```hosts
-# Homelab Services (Docker Host)
-192.168.1.50  homelab.iye.internal iye.internal librenms.iye.internal grafana.iye.internal prometheus.iye.internal oxidized.iye.internal trivy.iye.internal
+# Homelab Stack Services (Docker Host)
+192.168.254.164  homelab.iye.internal iye.internal librenms.iye.internal grafana.iye.internal prometheus.iye.internal oxidized.iye.internal trivy.iye.internal docker-homelab.iye.internal
 
 # Homelab Devices
-192.168.1.10  pve1.iye.internal portainer.iye.internal
-192.168.1.11  pve2.iye.internal
-192.168.1.12  pve3.iye.internal
-192.168.1.2   sw-core.iye.internal
-192.168.1.3   sw-poe.iye.internal
-192.168.1.11  ap-livingroom.iye.internal
-192.168.1.12  ap-office.iye.internal
+192.168.254.111  virt-1.iye.internal
+192.168.254.112  virt-2.iye.internal
+192.168.254.113  virt-3.iye.internal
+192.168.0.44     ap-outside.iye.internal
+192.168.0.42     ap-callie.iye.internal
+192.168.0.47     ap-robert.iye.internal
+192.168.0.41     ap-garage.iye.internal
+192.168.0.45     ap-printer.iye.internal
+192.168.0.46     ap-fort.iye.internal
+# <SWITCH_1_IP>  switch-1.iye.internal
+# <SWITCH_2_IP>  switch-2.iye.internal
 ```
 
 ---
@@ -117,7 +125,7 @@ These records allow LibreNMS, Prometheus, and Homepage to reach your physical ha
 ## Host & Device Setup Commands
 
 ### 1. Proxmox VE (Run on all 3 PVE Nodes)
-SSH into **each** of your 3 Proxmox nodes (`pve1`, `pve2`, `pve3`) and run:
+SSH into **each** of your 3 Proxmox nodes (`virt-1`, `virt-2`, `virt-3`) and run:
 
 ```bash
 # A. Install Prometheus Node Exporter (System CPU, RAM, Disk, Network)
