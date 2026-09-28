@@ -698,8 +698,8 @@ configs:
     content: |
       ---
       # Global default SSH credentials
-      username: admin
-      password: changeme
+      username: root
+      password: v01c3l@bNOW
       model: routeros
       resolve_dns: true
       interval: 3600
@@ -769,7 +769,7 @@ configs:
             model: os
             group: group
           headers:
-            X-Auth-Token: "vOo3rNBCUvRpzuDolU0G0zMqiOgBZemaEliwVQw50627347a"
+            X-Auth-Token: vOo3rNBCUvRpzuDolU0G0zMqiOgBZemaEliwVQw50627347a
   oxidized_router_db:
     content: |
       switch-1.iye.internal:routeros:switches
