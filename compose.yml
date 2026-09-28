@@ -267,6 +267,11 @@ services:
       - "8888:8888"
     environment:
       - "CONFIG_RELOAD_INTERVAL=600"
+    env_file:
+      - path: .env
+        required: false
+      - path: stack.env
+        required: false
     configs:
       - source: oxidized_config
         target: /etc/oxidized/config
@@ -698,8 +703,8 @@ configs:
     content: |
       ---
       # Global default SSH credentials
-      username: root
-      password: v01c3l@bNOW
+      username: ${OXIDIZED_GLOBAL_USER:-root}
+      password: ${OXIDIZED_GLOBAL_PASSWORD:-v01c3l@bNOW}
       model: routeros
       resolve_dns: true
       interval: 3600
@@ -715,15 +720,21 @@ configs:
       models:
         # MikroTik RouterOS Switches / Routers
         routeros:
-          username: admin
-          password: v01c3l@bNOW
+          username: ${OXIDIZED_ROUTEROS_USER:-admin}
+          password: ${OXIDIZED_ROUTEROS_PASSWORD:-v01c3l@bNOW}
           # vars:
           #   ssh_keys: /home/oxidized/.config/oxidized/id_rsa
 
         # OpenWrt Access Points / Routers
         openwrt:
-          username: root
-          password: v01c3l@bNOW
+          username: ${OXIDIZED_OPENWRT_USER:-root}
+          password: ${OXIDIZED_OPENWRT_PASSWORD:-v01c3l@bNOW}
+          vars:
+            openwrt_binary_files:
+              - /etc/dropbear/dropbear_rsa_host_key
+              - /etc/dropbear/dropbear_ed25519_host_key
+              - /etc/dropbear/dropbear_ecdsa_host_key
+              - /etc/dropbear/dropbear_dss_host_key
           # vars:
           #   ssh_keys: /home/oxidized/.config/oxidized/id_rsa
 
@@ -752,7 +763,7 @@ configs:
           repo: "/home/oxidized/.config/oxidized/oxidized.git"
 
       source:
-        default: http
+        default: ${OXIDIZED_SOURCE:-http}
         csv:
           file: "/home/oxidized/.config/oxidized/router.db"
           delimiter: !ruby/regexp /:/
@@ -769,7 +780,7 @@ configs:
             model: os
             group: group
           headers:
-            X-Auth-Token: vOo3rNBCUvRpzuDolU0G0zMqiOgBZemaEliwVQw50627347a
+            X-Auth-Token: "${LIBRENMS_API_TOKEN:-vOo3rNBCUvRpzuDolU0G0zMqiOgBZemaEliwVQw50627347a}"
   oxidized_router_db:
     content: |
       switch-1.iye.internal:routeros:switches
