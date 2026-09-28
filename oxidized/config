@@ -54,8 +54,17 @@ output:
     repo: "/home/oxidized/.config/oxidized/oxidized.git"
 
 source:
-  default: http
-  debug: false
+  default: csv
+  csv:
+    file: "/home/oxidized/.config/oxidized/router.db"
+    delimiter: !ruby/regexp /:/
+    map:
+      name: 0
+      model: 1
+      group: 2
+  # Optional: To use LibreNMS as the dynamic inventory source:
+  # 1. Create an API token in LibreNMS (Settings -> API Access -> API Tokens)
+  # 2. Change 'default: csv' to 'default: http' above and update X-Auth-Token below:
   http:
     insecure: true
     url: http://librenms:8000/api/v0/oxidized
@@ -64,5 +73,4 @@ source:
       model: os
       group: group
     headers:
-      # Replace with your LibreNMS API token generated under LibreNMS -> Settings -> API Access
       X-Auth-Token: "REPLACE_WITH_LIBRENMS_API_TOKEN"

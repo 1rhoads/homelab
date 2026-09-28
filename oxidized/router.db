@@ -1,0 +1,8 @@
+switch-1.iye.internal:routeros:switches
+switch-2.iye.internal:routeros:switches
+ap-outside.iye.internal:openwrt:access-points
+ap-callie.iye.internal:openwrt:access-points
+ap-robert.iye.internal:openwrt:access-points
+ap-garage.iye.internal:openwrt:access-points
+ap-printer.iye.internal:openwrt:access-points
+ap-fort.iye.internal:openwrt:access-points

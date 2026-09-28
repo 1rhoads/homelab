@@ -268,6 +268,8 @@ services:
     configs:
       - source: oxidized_config
         target: /etc/oxidized/config
+      - source: oxidized_router_db
+        target: /etc/oxidized/router.db
     volumes:
       - oxidized-data:/home/oxidized/.config/oxidized
     entrypoint: ["/bin/sh", "-c"]
@@ -275,6 +277,7 @@ services:
       - >
         mkdir -p /home/oxidized/.config/oxidized &&
         cp /etc/oxidized/config /home/oxidized/.config/oxidized/config &&
+        cp /etc/oxidized/router.db /home/oxidized/.config/oxidized/router.db &&
         chown -R oxidized:oxidized /home/oxidized/.config/oxidized &&
         exec gosu oxidized oxidized
     depends_on:
@@ -743,8 +746,15 @@ configs:
           repo: "/home/oxidized/.config/oxidized/oxidized.git"
 
       source:
-        default: http
-        debug: false
+        default: csv
+        csv:
+          file: "/home/oxidized/.config/oxidized/router.db"
+          delimiter: !ruby/regexp /:/
+          map:
+            name: 0
+            model: 1
+            group: 2
+        # Optional: Dynamic inventory via LibreNMS API (generate token under LibreNMS -> Settings -> API Access)
         http:
           insecure: true
           url: http://librenms:8000/api/v0/oxidized
@@ -753,8 +763,17 @@ configs:
             model: os
             group: group
           headers:
-            # Replace with your LibreNMS API token generated under LibreNMS -> Settings -> API Access
             X-Auth-Token: "REPLACE_WITH_LIBRENMS_API_TOKEN"
+  oxidized_router_db:
+    content: |
+      switch-1.iye.internal:routeros:switches
+      switch-2.iye.internal:routeros:switches
+      ap-outside.iye.internal:openwrt:access-points
+      ap-callie.iye.internal:openwrt:access-points
+      ap-robert.iye.internal:openwrt:access-points
+      ap-garage.iye.internal:openwrt:access-points
+      ap-printer.iye.internal:openwrt:access-points
+      ap-fort.iye.internal:openwrt:access-points
   grafana_datasources:
     content: |
       apiVersion: 1
