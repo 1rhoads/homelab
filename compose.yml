@@ -142,7 +142,9 @@ services:
       - "DB_TIMEOUT=60"
       - "REDIS_HOST=redis"
       - "REDIS_PORT=6379"
-      - "LIBRENMS_BASE_URL=${LIBRENMS_BASE_URL:-/}"
+      - "LIBRENMS_BASE_URL=${LIBRENMS_BASE_URL:-https://librenms.${DOMAIN:-iye.internal}}"
+      - "APP_URL=https://librenms.${DOMAIN:-iye.internal}"
+      - "APP_TRUSTED_PROXIES=*"
       - "LIBRENMS_SNMP_COMMUNITY=${LIBRENMS_SNMP_COMMUNITY:-homelab}"
 
   # ---------------------------------------------------------------------------
@@ -381,7 +383,10 @@ configs:
       # LibreNMS Web UI
       librenms.{$$DOMAIN:homelab.local} {
       	tls internal
-      	reverse_proxy librenms:8000
+      	reverse_proxy librenms:8000 {
+      		header_up Host {host}
+      		header_up X-Forwarded-Proto https
+      	}
       }
 
       # Grafana Dashboards

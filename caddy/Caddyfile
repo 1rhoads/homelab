@@ -13,7 +13,10 @@
 # LibreNMS Web UI
 librenms.{$DOMAIN:homelab.local} {
 	tls internal
-	reverse_proxy librenms:8000
+	reverse_proxy librenms:8000 {
+		header_up Host {host}
+		header_up X-Forwarded-Proto https
+	}
 }
 
 # Grafana Dashboards
