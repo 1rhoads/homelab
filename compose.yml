@@ -716,14 +716,14 @@ configs:
         # MikroTik RouterOS Switches / Routers
         routeros:
           username: admin
-          password: changeme
+          password: v01c3l@bNOW
           # vars:
           #   ssh_keys: /home/oxidized/.config/oxidized/id_rsa
 
         # OpenWrt Access Points / Routers
         openwrt:
           username: root
-          password: changeme
+          password: v01c3l@bNOW
           # vars:
           #   ssh_keys: /home/oxidized/.config/oxidized/id_rsa
 
@@ -752,7 +752,7 @@ configs:
           repo: "/home/oxidized/.config/oxidized/oxidized.git"
 
       source:
-        default: csv
+        default: http
         csv:
           file: "/home/oxidized/.config/oxidized/router.db"
           delimiter: !ruby/regexp /:/
@@ -769,7 +769,7 @@ configs:
             model: os
             group: group
           headers:
-            X-Auth-Token: "REPLACE_WITH_LIBRENMS_API_TOKEN"
+            X-Auth-Token: "vOo3rNBCUvRpzuDolU0G0zMqiOgBZemaEliwVQw50627347a"
   oxidized_router_db:
     content: |
       switch-1.iye.internal:routeros:switches
