@@ -213,14 +213,18 @@ To guarantee that your Docker containers (like Prometheus, LibreNMS, and Oxidize
 4. Under **Environment variables**, paste your settings:
    ```ini
    DOMAIN=iye.internal
-   PROXMOX_NODE1_HOST=pve1.iye.internal
-   PROXMOX_NODE2_HOST=pve2.iye.internal
-   PROXMOX_NODE3_HOST=pve3.iye.internal
-   PORTAINER_HOST=portainer.iye.internal
-   MIKROTIK_CORE_HOST=sw-core.iye.internal
-   MIKROTIK_SW2_HOST=sw-poe.iye.internal
-   OPENWRT_AP1_HOST=ap-livingroom.iye.internal
-   OPENWRT_AP2_HOST=ap-office.iye.internal
+   PROXMOX_NODE1_HOST=virt-1.iye.internal
+   PROXMOX_NODE2_HOST=virt-2.iye.internal
+   PROXMOX_NODE3_HOST=virt-3.iye.internal
+   PORTAINER_HOST=docker-homelab.iye.internal
+   MIKROTIK_CORE_HOST=switch-1.iye.internal
+   MIKROTIK_SW2_HOST=switch-2.iye.internal
+   OPENWRT_AP1_HOST=ap-outside.iye.internal
+   OPENWRT_AP2_HOST=ap-callie.iye.internal
+   OPENWRT_AP3_HOST=ap-robert.iye.internal
+   OPENWRT_AP4_HOST=ap-garage.iye.internal
+   OPENWRT_AP5_HOST=ap-printer.iye.internal
+   OPENWRT_AP6_HOST=ap-fort.iye.internal
    MYSQL_PASSWORD=your_secure_password
    GRAFANA_ADMIN_PASSWORD=your_secure_password
    ```
@@ -228,11 +232,14 @@ To guarantee that your Docker containers (like Prometheus, LibreNMS, and Oxidize
 
 ---
 
-## Post-Deployment: Connecting Oxidized to LibreNMS
+## Post-Deployment: Oxidized Network Backups
 
-Once LibreNMS has discovered your switches and APs:
+By default, Oxidized automatically tracks your switches and access points via the built-in [oxidized/router.db](oxidized/router.db) inventory.
+
+### (Optional) Switching Oxidized to LibreNMS Dynamic Inventory:
+If you prefer LibreNMS to dynamically provide device inventory to Oxidized instead of `router.db`:
 1. In LibreNMS, navigate to `https://librenms.iye.internal/api-access/` and generate an API Token.
-2. Edit [oxidized/config](oxidized/config#L68) and set `X-Auth-Token` to that token.
+2. In `compose.yml` (under `oxidized_config`) and [oxidized/config](oxidized/config), change `default: csv` to `default: http` and set `X-Auth-Token` to that token.
 3. In LibreNMS &rarr; **Global Settings** &rarr; **External** &rarr; **Oxidized**:
    - Enable Oxidized Support: **ON**
    - URL: `http://librenms_oxidized:8888`
