@@ -56,6 +56,7 @@ This stack provides centralized network monitoring, automated configuration vers
 | **Prometheus** | `prom/prometheus:latest` | `9090` | Time-series metrics scraper with alert rules for Proxmox, switches, and APs |
 | **Grafana** | `grafana/grafana-oss:latest` | `3000` | Telemetry dashboards pre-provisioned with the Prometheus data source |
 | **Trivy** | `aquasec/trivy:latest` | `4954` | Vulnerability and security scanner server for containers, images, and filesystems |
+| **Trivy Exporter** | `aquasec/trivy:latest` | `9091` | Automated container vulnerability scanner discovering running Docker containers & exporting Prometheus metrics |
 | **NetBox** | `netboxcommunity/netbox:latest` | `8080` | IPAM & DCIM network infrastructure source of truth, device modeling & prefix tracking |
 | **NetBox Worker** | `netboxcommunity/netbox:latest` | — | Redis Queue (RQ) background task worker for NetBox webhooks, scripts & reports |
 | **PostgreSQL** | `postgres:16-alpine` | — | Dedicated relational database backend for NetBox |
@@ -258,6 +259,34 @@ All Grafana dashboards are automatically provisioned into the **Homelab** folder
 | **Proxmox VE Cluster** | [`proxmox-cluster.json`](grafana/provisioning/dashboards/json/proxmox-cluster.json) | Total cluster capacity (28 cores, 77 GB RAM), per-node CPU/RAM utilization gauges, load averages, ZFS ARC cache size & hit rates, root storage, and network interface throughput (`virt-1`, `virt-2`, `virt-3`). |
 | **OpenWrt APs & WiFi** | [`openwrt-wifi.json`](grafana/provisioning/dashboards/json/openwrt-wifi.json) | Active client counts (77+ clients), client distribution per AP, 5 GHz vs 2.4 GHz radio frequency split, 802.11s mesh backhaul status & signal dBm, and AP CPU/memory health across all 6 APs. |
 | **Docker Host Telemetry** | [`docker-host.json`](grafana/provisioning/dashboards/json/docker-host.json) | Host uptime, CPU mode breakdown (user, system, iowait), 1m/5m/15m load averages, memory allocation (used, cached, buffers, swap), NVMe disk space & I/O, and `eth0` network throughput. |
+| **Homelab Security (Trivy)** | [`trivy-security.json`](grafana/provisioning/dashboards/json/trivy-security.json) | Container image security posture, Critical/High/Medium/Low vulnerability totals, per-container risk distribution, scan cycle age, and actionable CVE findings table with affected packages and fixed versions. |
+
+---
+
+## Container Vulnerability Scanning (Trivy & Grafana)
+
+The stack includes automated container security scanning powered by **Aqua Security Trivy** and the custom **Trivy Prometheus Exporter**:
+
+1. **Dynamic Container Discovery**: The `trivy_exporter` queries `/var/run/docker.sock` to detect all active container images deployed across the Docker host.
+2. **Server-Side Scans**: Images are evaluated against the Trivy server (`http://trivy:4954`), utilizing the shared vulnerability database cache without re-downloading DB definitions.
+3. **Prometheus Telemetry**: Gauges for vulnerability counts (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`), scan status, cycle duration, and detailed CVE findings (`trivy_image_cve_info`) are exposed on `:9091/metrics`.
+4. **Grafana Security Dashboard**: Pre-provisioned at `https://grafana.iye.internal/d/trivy-security` with:
+   - Executive KPI Stat tiles with threshold alerts (Critical/High CVE alerts).
+   - Horizontal stacked bar charts of vulnerabilities per container.
+   - Donut charts for severity breakdown.
+   - Container Image Risk Scorecard table.
+   - Actionable CVE findings table linking directly to the National Vulnerability Database (NVD).
+5. **Manual Trigger & API**:
+   ```bash
+   # Trigger an immediate ad-hoc scan cycle:
+   curl -X POST http://<DOCKER_HOST_IP>:9091/scan
+
+   # View raw Prometheus vulnerability metrics:
+   curl http://<DOCKER_HOST_IP>:9091/metrics
+
+   # Check exporter health and scan status:
+   curl http://<DOCKER_HOST_IP>:9091/healthz
+   ```
 
 ---
 
