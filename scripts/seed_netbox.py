@@ -12,6 +12,7 @@ Pre-populates:
 
 import urllib.request
 import urllib.error
+import urllib.parse
 import json
 import ssl
 import time
@@ -184,22 +185,37 @@ def main():
         dev_id = dev["id"]
 
         if d["ip"]:
-            # Ensure primary management interface
-            iface = get_or_create("dcim/interfaces/", {
-                "device": dev_id,
-                "name": "eth0",
-                "type": "1000base-t"
-            }, lookup_field="name")
+            # Ensure primary management interface for this device
+            existing_ifaces = api_call(f"dcim/interfaces/?device_id={dev_id}&name=eth0")
+            if existing_ifaces.get("count", 0) > 0:
+                iface = existing_ifaces["results"][0]
+            else:
+                iface = api_call("dcim/interfaces/", method="POST", data={
+                    "device": dev_id,
+                    "name": "eth0",
+                    "type": "1000base-t"
+                })
             iface_id = iface["id"]
 
             # Ensure IP address assigned to interface
-            ip_obj = get_or_create("ipam/ip-addresses/", {
-                "address": d["ip"],
-                "status": "active",
-                "assigned_object_type": "dcim.interface",
-                "assigned_object_id": iface_id,
-                "dns_name": d["name"]
-            }, lookup_field="address")
+            encoded_ip = urllib.parse.quote(d["ip"])
+            existing_ips = api_call(f"ipam/ip-addresses/?address={encoded_ip}")
+            if existing_ips.get("count", 0) > 0:
+                ip_obj = existing_ips["results"][0]
+                if ip_obj.get("assigned_object_id") != iface_id:
+                    ip_obj = api_call(f"ipam/ip-addresses/{ip_obj['id']}/", method="PATCH", data={
+                        "assigned_object_type": "dcim.interface",
+                        "assigned_object_id": iface_id,
+                        "dns_name": d["name"]
+                    })
+            else:
+                ip_obj = api_call("ipam/ip-addresses/", method="POST", data={
+                    "address": d["ip"],
+                    "status": "active",
+                    "assigned_object_type": "dcim.interface",
+                    "assigned_object_id": iface_id,
+                    "dns_name": d["name"]
+                })
 
             # Set as primary IP on device
             api_call(f"dcim/devices/{dev_id}/", method="PATCH", data={
