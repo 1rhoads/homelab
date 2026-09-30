@@ -25,92 +25,8 @@
       "collapsed": false,
       "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
       "id": 1,
-      "title": "Fleet Health & Service Reachability",
+      "title": "Proxmox VE Cluster Overview",
       "type": "row"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "mappings": [
-            {
-              "options": {
-                "0": { "color": "red", "text": "DOWN" },
-                "1": { "color": "green", "text": "UP" }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "green", "value": 1 }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 1 },
-      "id": 2,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "horizontal",
-        "reduceOptions": {
-          "calcs": ["lastNotNull"],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "editorMode": "code",
-          "expr": "up",
-          "legendFormat": "{{job}} / {{instance}}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Telemetry Targets Reachability (Up / Down)",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [{ "color": "blue", "value": null }]
-          }
-        }
-      },
-      "gridPos": { "h": 3, "w": 6, "x": 0, "y": 5 },
-      "id": 3,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "count(up == 1)",
-          "legendFormat": "Targets Online",
-          "refId": "A"
-        }
-      ],
-      "title": "Targets Online",
-      "type": "stat"
     },
     {
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -124,41 +40,8 @@
           }
         }
       },
-      "gridPos": { "h": 3, "w": 6, "x": 6, "y": 5 },
-      "id": 4,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(wifi_stations{ifname!~'.*mesh.*'})",
-          "legendFormat": "Clients",
-          "refId": "A"
-        }
-      ],
-      "title": "Active WiFi Clients",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [{ "color": "purple", "value": null }]
-          }
-        }
-      },
-      "gridPos": { "h": 3, "w": 6, "x": 12, "y": 5 },
-      "id": 5,
+      "gridPos": { "h": 3, "w": 6, "x": 0, "y": 1 },
+      "id": 2,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -175,7 +58,74 @@
           "refId": "A"
         }
       ],
-      "title": "Proxmox Nodes Online",
+      "title": "Online Hypervisors",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "blue", "value": null }]
+          }
+        }
+      },
+      "gridPos": { "h": 3, "w": 6, "x": 6, "y": 1 },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "count(count(node_cpu_seconds_total{job='proxmox'}) by (instance, cpu))",
+          "legendFormat": "Total Cores",
+          "refId": "A"
+        }
+      ],
+      "title": "Cluster CPU Cores",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "purple", "value": null }]
+          },
+          "unit": "bytes"
+        }
+      },
+      "gridPos": { "h": 3, "w": 6, "x": 12, "y": 1 },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "sum(node_memory_MemTotal_bytes{job='proxmox'})",
+          "legendFormat": "Cluster RAM",
+          "refId": "A"
+        }
+      ],
+      "title": "Total Cluster RAM",
       "type": "stat"
     },
     {
@@ -190,8 +140,8 @@
           }
         }
       },
-      "gridPos": { "h": 3, "w": 6, "x": 18, "y": 5 },
-      "id": 6,
+      "gridPos": { "h": 3, "w": 6, "x": 18, "y": 1 },
+      "id": 5,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
@@ -203,19 +153,19 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "count(up{job='openwrt'} == 1)",
-          "legendFormat": "Access Points",
+          "expr": "avg(node_load1{job='proxmox'})",
+          "legendFormat": "Cluster Load Avg",
           "refId": "A"
         }
       ],
-      "title": "OpenWrt APs Online",
+      "title": "Cluster Load1 Avg",
       "type": "stat"
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 8 },
-      "id": 7,
-      "title": "Compute Infrastructure Snapshot",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 4 },
+      "id": 6,
+      "title": "Hypervisor CPU Utilization & Load",
       "type": "row"
     },
     {
@@ -236,232 +186,53 @@
           "unit": "percent"
         }
       },
-      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 9 },
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 5 },
+      "id": 7,
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{job='proxmox',instance=~'$node',mode='idle'}[5m])) * 100)",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Current CPU Usage (%)",
+      "type": "gauge"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          },
+          "unit": "percent"
+        }
+      },
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 5 },
       "id": 8,
       "options": {
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
-      },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "avg(100 - (rate(node_cpu_seconds_total{job='proxmox',mode='idle'}[5m]) * 100))",
-          "legendFormat": "Proxmox Cluster CPU",
-          "refId": "A"
-        }
-      ],
-      "title": "Proxmox Cluster Avg CPU",
-      "type": "gauge"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "#EAB839", "value": 75 },
-              { "color": "red", "value": 90 }
-            ]
-          },
-          "unit": "percent"
-        }
-      },
-      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 9 },
-      "id": 9,
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
-      },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "avg((1 - (node_memory_MemAvailable_bytes{job='proxmox'} / node_memory_MemTotal_bytes{job='proxmox'})) * 100)",
-          "legendFormat": "Proxmox Cluster RAM",
-          "refId": "A"
-        }
-      ],
-      "title": "Proxmox Cluster Avg RAM",
-      "type": "gauge"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "#EAB839", "value": 70 },
-              { "color": "red", "value": 85 }
-            ]
-          },
-          "unit": "percent"
-        }
-      },
-      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 9 },
-      "id": 10,
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
-      },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "100 - (avg(rate(node_cpu_seconds_total{job='docker-host',mode='idle'}[5m])) * 100)",
-          "legendFormat": "Docker Host CPU",
-          "refId": "A"
-        }
-      ],
-      "title": "Docker Host CPU",
-      "type": "gauge"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "#EAB839", "value": 75 },
-              { "color": "red", "value": 90 }
-            ]
-          },
-          "unit": "percent"
-        }
-      },
-      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 9 },
-      "id": 11,
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true
-      },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "(1 - (node_memory_MemAvailable_bytes{job='docker-host'} / node_memory_MemTotal_bytes{job='docker-host'})) * 100",
-          "legendFormat": "Docker Host RAM",
-          "refId": "A"
-        }
-      ],
-      "title": "Docker Host RAM",
-      "type": "gauge"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 15,
-            "lineInterpolation": "smooth",
-            "lineWidth": 2
-          },
-          "unit": "percent"
-        }
-      },
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 14 },
-      "id": 12,
-      "options": {
         "legend": { "displayMode": "list", "placement": "bottom" },
         "tooltip": { "mode": "multi" }
       },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{job='proxmox',mode='idle'}[5m])) * 100)",
+          "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{job='proxmox',instance=~'$node',mode='idle'}[5m])) * 100)",
           "legendFormat": "{{instance}}",
           "refId": "A"
         }
       ],
-      "title": "Proxmox Nodes CPU Utilization",
-      "type": "timeseries"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 15,
-            "lineInterpolation": "smooth",
-            "lineWidth": 2
-          },
-          "unit": "percent"
-        }
-      },
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 14 },
-      "id": 13,
-      "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "multi" }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "(1 - (node_memory_MemAvailable_bytes{job='proxmox'} / node_memory_MemTotal_bytes{job='proxmox'})) * 100",
-          "legendFormat": "{{instance}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Proxmox Nodes RAM Utilization",
-      "type": "timeseries"
-    },
-    {
-      "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 21 },
-      "id": 14,
-      "title": "Wireless Network & OpenWrt Fleet",
-      "type": "row"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 20,
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
-            "stacking": { "group": "A", "mode": "normal" }
-          },
-          "unit": "short"
-        }
-      },
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 22 },
-      "id": 15,
-      "options": {
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] },
-        "tooltip": { "mode": "multi" }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(wifi_stations{job='openwrt',ifname!~'.*mesh.*'}) by (instance)",
-          "legendFormat": "{{instance}}",
-          "refId": "A"
-        }
-      ],
-      "title": "Connected WiFi Clients per AP",
+      "title": "CPU Usage Over Time",
       "type": "timeseries"
     },
     {
@@ -477,8 +248,8 @@
           "unit": "short"
         }
       },
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 22 },
-      "id": 16,
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 5 },
+      "id": 9,
       "options": {
         "legend": { "displayMode": "list", "placement": "bottom" },
         "tooltip": { "mode": "multi" }
@@ -486,19 +257,233 @@
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "node_load1{job='openwrt'}",
-          "legendFormat": "{{instance}}",
+          "expr": "node_load1{job='proxmox',instance=~'$node'}",
+          "legendFormat": "{{instance}} (1m)",
           "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "node_load5{job='proxmox',instance=~'$node'}",
+          "legendFormat": "{{instance}} (5m)",
+          "refId": "B"
         }
       ],
-      "title": "OpenWrt AP Load Average (1m)",
+      "title": "Node Load Average",
       "type": "timeseries"
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 29 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 11 },
+      "id": 10,
+      "title": "Memory & ZFS ARC Cache",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "#EAB839", "value": 75 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "unit": "percent"
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 12 },
+      "id": 11,
+      "options": {
+        "displayMode": "basic",
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "showUnfilled": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "(1 - (node_memory_MemAvailable_bytes{job='proxmox',instance=~'$node'} / node_memory_MemTotal_bytes{job='proxmox',instance=~'$node'})) * 100",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory Used (%)",
+      "type": "bargauge"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          },
+          "unit": "bytes"
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 12 },
+      "id": 12,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "node_memory_MemTotal_bytes{job='proxmox',instance=~'$node'} - node_memory_MemAvailable_bytes{job='proxmox',instance=~'$node'}",
+          "legendFormat": "{{instance}} Used",
+          "refId": "A"
+        }
+      ],
+      "title": "RAM In-Use (Bytes)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          },
+          "unit": "bytes"
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 12 },
+      "id": 13,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "node_zfs_arc_size{job='proxmox',instance=~'$node'}",
+          "legendFormat": "{{instance}} ARC",
+          "refId": "A"
+        }
+      ],
+      "title": "ZFS ARC Cache Size",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          },
+          "unit": "percent"
+        }
+      },
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 12 },
+      "id": 14,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "rate(node_zfs_arc_hits{job='proxmox',instance=~'$node'}[5m]) / (rate(node_zfs_arc_hits{job='proxmox',instance=~'$node'}[5m]) + rate(node_zfs_arc_misses{job='proxmox',instance=~'$node'}[5m])) * 100",
+          "legendFormat": "{{instance}} Hit Rate",
+          "refId": "A"
+        }
+      ],
+      "title": "ZFS ARC Hit Rate (%)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "id": 15,
+      "title": "Storage & Filesystem Usage",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "#EAB839", "value": 80 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "unit": "percent"
+        }
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 19 },
+      "id": 16,
+      "options": {
+        "displayMode": "lcd",
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "showUnfilled": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "(1 - (node_filesystem_avail_bytes{job='proxmox',instance=~'$node',mountpoint='/'} / node_filesystem_size_bytes{job='proxmox',instance=~'$node',mountpoint='/'})) * 100",
+          "legendFormat": "{{instance}} (root /)",
+          "refId": "A"
+        }
+      ],
+      "title": "Root Filesystem (/) Usage (%)",
+      "type": "bargauge"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2
+          },
+          "unit": "bytes"
+        }
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 19 },
       "id": 17,
-      "title": "Caddy Reverse Proxy & Traffic",
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "expr": "node_filesystem_avail_bytes{job='proxmox',instance=~'$node',mountpoint='/'}",
+          "legendFormat": "{{instance}} Avail",
+          "refId": "A"
+        }
+      ],
+      "title": "Root Filesystem Space Available",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 25 },
+      "id": 18,
+      "title": "Network Interface Traffic",
       "type": "row"
     },
     {
@@ -511,69 +496,25 @@
             "lineInterpolation": "smooth",
             "lineWidth": 2
           },
-          "unit": "reqps"
+          "unit": "binBps"
         }
       },
-      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 30 },
-      "id": 18,
-      "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "single" }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "sum(rate(caddy_http_requests_total[5m])) by (server)",
-          "legendFormat": "{{server}}",
-          "refId": "A"
-        }
-      ],
-      "title": "HTTP Request Rate",
-      "type": "timeseries"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "mappings": [
-            {
-              "options": {
-                "0": { "color": "red", "text": "DEGRADED" },
-                "1": { "color": "green", "text": "HEALTHY" }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "red", "value": null },
-              { "color": "green", "value": 1 }
-            ]
-          }
-        }
-      },
-      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 30 },
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 26 },
       "id": 19,
       "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
-        "textMode": "auto"
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi" }
       },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "caddy_reverse_proxy_upstreams_healthy",
-          "legendFormat": "{{upstream}}",
+          "expr": "sum(rate(node_network_receive_bytes_total{job='proxmox',instance=~'$node',device!~'lo|veth.*|fw.*|tap.*'}[5m])) by (instance, device)",
+          "legendFormat": "{{instance}} - {{device}}",
           "refId": "A"
         }
       ],
-      "title": "Reverse Proxy Upstream Health",
-      "type": "stat"
+      "title": "Network Traffic Received (Rx)",
+      "type": "timeseries"
     },
     {
       "datasource": { "type": "prometheus", "uid": "prometheus" },
@@ -585,36 +526,65 @@
             "lineInterpolation": "smooth",
             "lineWidth": 2
           },
-          "unit": "s"
+          "unit": "binBps"
         }
       },
-      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 30 },
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 26 },
       "id": 20,
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "single" }
+        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+        "tooltip": { "mode": "multi" }
       },
       "targets": [
         {
           "datasource": { "type": "prometheus", "uid": "prometheus" },
-          "expr": "histogram_quantile(0.95, sum(rate(caddy_http_request_duration_seconds_bucket[5m])) by (le))",
-          "legendFormat": "p95 Latency",
+          "expr": "sum(rate(node_network_transmit_bytes_total{job='proxmox',instance=~'$node',device!~'lo|veth.*|fw.*|tap.*'}[5m])) by (instance, device)",
+          "legendFormat": "{{instance}} - {{device}}",
           "refId": "A"
         }
       ],
-      "title": "Request Latency (p95)",
+      "title": "Network Traffic Transmitted (Tx)",
       "type": "timeseries"
     }
   ],
   "refresh": "15s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["homelab", "overview", "infrastructure"],
-  "templating": { "list": [] },
+  "tags": ["proxmox", "hypervisor", "cluster", "homelab"],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": true,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values(node_cpu_seconds_total{job='proxmox'}, instance)",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "node",
+        "options": [],
+        "query": {
+          "query": "label_values(node_cpu_seconds_total{job='proxmox'}, instance)",
+          "refId": "StandardVariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
   "time": { "from": "now-6h", "to": "now" },
   "timepicker": {},
   "timezone": "",
-  "title": "Homelab Overview",
-  "uid": "homelab-overview",
-  "version": 2
+  "title": "Proxmox VE Cluster",
+  "uid": "proxmox-cluster",
+  "version": 1
 }
