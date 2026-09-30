@@ -354,6 +354,23 @@ services:
     volumes:
       - trivy-cache:/root/.cache/
 
+  # ---------------------------------------------------------------------------
+  # Node Exporter: Docker Host Hardware & OS Telemetry
+  # ---------------------------------------------------------------------------
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node_exporter
+    restart: always
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+
 # -----------------------------------------------------------------------------
 # Persistent Volumes
 # -----------------------------------------------------------------------------
@@ -435,54 +452,54 @@ configs:
         # Caddy Reverse Proxy & HTTP Metrics
         - job_name: "caddy"
           static_configs:
-            - targets: ["caddy:2019"]
+            - targets: ["homelab_caddy:2019"]
 
-        # Proxmox VE Nodes (via node_exporter port 9100 or proxmox-pve-exporter port 9221)
-        # You can use hostnames (e.g. pve1.iye.internal) or static IPs!
+        # Docker Host (docker-homelab.iye.internal)
+        - job_name: "docker-host"
+          scrape_interval: 15s
+          static_configs:
+            - targets: ["node_exporter:9100"]
+              labels:
+                role: "docker-host"
+                instance: "${PORTAINER_HOST:-docker-homelab.iye.internal}"
+
+        # Proxmox VE Nodes (via node_exporter port 9100)
         - job_name: "proxmox"
           scrape_interval: 15s
           static_configs:
             - targets:
-                # - "pve1.iye.internal:9100"   # PVE Node 1 (or 192.168.1.10:9100)
-                # - "pve2.iye.internal:9100"   # PVE Node 2 (or 192.168.1.11:9100)
-                # - "pve3.iye.internal:9100"   # PVE Node 3 (or 192.168.1.12:9100)
+                - "${PROXMOX_NODE1_HOST:-virt-1.iye.internal}:9100"
+                - "${PROXMOX_NODE2_HOST:-virt-2.iye.internal}:9100"
+                - "${PROXMOX_NODE3_HOST:-virt-3.iye.internal}:9100"
               labels:
                 role: "hypervisor"
                 platform: "proxmox"
 
-        # MikroTik Switches & Routers (RouterOS v7 native metrics or SNMP exporter)
-        - job_name: "mikrotik"
-          scrape_interval: 30s
-          metrics_path: /metrics
-          static_configs:
-            - targets:
-                # - "sw-core.iye.internal:80"  # Switch 1 (Core)
-                # - "sw-poe.iye.internal:80"   # Switch 2 (Distribution / PoE)
-                # - "sw-edge.iye.internal:80"  # Switch 3 (Edge)
-              labels:
-                role: "switch"
-                vendor: "mikrotik"
-
-        # OpenWrt Access Points (via 'prometheus-node-exporter-lua' on port 9100)
+        # OpenWrt Access Points (via prometheus-node-exporter-lua on port 9100)
         - job_name: "openwrt"
           scrape_interval: 30s
           static_configs:
             - targets:
-                # - "ap-livingroom.iye.internal:9100"  # OpenWrt AP 1
-                # - "ap-office.iye.internal:9100"      # OpenWrt AP 2
-                # - "ap-garage.iye.internal:9100"      # OpenWrt AP 3
+                - "${OPENWRT_AP1_HOST:-ap-outside.iye.internal}:9100"
+                - "${OPENWRT_AP2_HOST:-ap-callie.iye.internal}:9100"
+                - "${OPENWRT_AP3_HOST:-ap-robert.iye.internal}:9100"
+                - "${OPENWRT_AP4_HOST:-ap-garage.iye.internal}:9100"
+                - "${OPENWRT_AP5_HOST:-ap-printer.iye.internal}:9100"
+                - "${OPENWRT_AP6_HOST:-ap-fort.iye.internal}:9100"
               labels:
                 role: "access_point"
                 vendor: "openwrt"
 
-        # Linux Hosts / VMs / LXCs (General Node Exporter)
-        - job_name: "node-exporter"
-          scrape_interval: 15s
+        # MikroTik Switches & Routers (RouterOS / SwOS)
+        - job_name: "mikrotik"
+          scrape_interval: 30s
           static_configs:
             - targets:
-                # - "server1.iye.internal:9100"
+                # - "${MIKROTIK_CORE_HOST:-switch-1.iye.internal}"
+                # - "${MIKROTIK_SW2_HOST:-switch-2.iye.internal}"
               labels:
-                role: "server"
+                role: "switch"
+                vendor: "mikrotik"
   prom_alerts:
     content: |
       groups:
