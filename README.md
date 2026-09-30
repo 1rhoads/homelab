@@ -56,6 +56,10 @@ This stack provides centralized network monitoring, automated configuration vers
 | **Prometheus** | `prom/prometheus:latest` | `9090` | Time-series metrics scraper with alert rules for Proxmox, switches, and APs |
 | **Grafana** | `grafana/grafana-oss:latest` | `3000` | Telemetry dashboards pre-provisioned with the Prometheus data source |
 | **Trivy** | `aquasec/trivy:latest` | `4954` | Vulnerability and security scanner server for containers, images, and filesystems |
+| **NetBox** | `netboxcommunity/netbox:latest` | `8080` | IPAM & DCIM network infrastructure source of truth, device modeling & prefix tracking |
+| **NetBox Worker** | `netboxcommunity/netbox:latest` | — | Redis Queue (RQ) background task worker for NetBox webhooks, scripts & reports |
+| **PostgreSQL** | `postgres:16-alpine` | — | Dedicated relational database backend for NetBox |
+| **NetBox Redis** | `redis:7-alpine` | — | Dedicated caching and message queue broker for NetBox |
 | **MariaDB** | `mariadb:10.11` | — | High-performance LTS database store for LibreNMS |
 | **Redis** | `redis:7.2-alpine` | — | Queue management and caching backend for LibreNMS |
 | **msmtpd** | `crazymax/msmtpd:latest` | — | Outbound email relay for LibreNMS alert notifications |
@@ -73,6 +77,7 @@ All HTTP/HTTPS requests to these URLs are intercepted by **Caddy** on ports 80/4
 | :--- | :---: | :---: | :--- |
 | **`homelab.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | **Homepage Operations Dashboard** |
 | **`iye.internal`** | `A` | `<DOCKER_HOST_IP>` | Homepage Dashboard (Apex domain fallback) |
+| **`netbox.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | NetBox IPAM & DCIM Web UI & REST API |
 | **`librenms.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | LibreNMS Web UI |
 | **`grafana.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Grafana Telemetry Dashboards |
 | **`prometheus.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Prometheus Web UI & Scrape Engine |

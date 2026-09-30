@@ -381,7 +381,124 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
 
-# -----------------------------------------------------------------------------
+  # ---------------------------------------------------------------------------
+  # NetBox: IPAM & DCIM Source of Truth (PostgreSQL Database)
+  # ---------------------------------------------------------------------------
+  netbox_db:
+    image: postgres:16-alpine
+    container_name: netbox_db
+    restart: always
+    environment:
+      - "TZ=${TZ:-UTC}"
+      - "POSTGRES_DB=${NETBOX_DB_NAME:-netbox}"
+      - "POSTGRES_USER=${NETBOX_DB_USER:-netbox}"
+      - "POSTGRES_PASSWORD=${NETBOX_DB_PASSWORD:-v01c3l@bNOW}"
+    volumes:
+      - netbox-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${NETBOX_DB_USER:-netbox} -d ${NETBOX_DB_NAME:-netbox}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # NetBox: Task Broker & In-Memory Cache (Redis)
+  # ---------------------------------------------------------------------------
+  netbox_redis:
+    image: redis:7-alpine
+    container_name: netbox_redis
+    restart: always
+    command:
+      - "redis-server"
+      - "--appendonly"
+      - "yes"
+    volumes:
+      - netbox-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # NetBox: IPAM & DCIM Application Core (Web UI & REST API)
+  # ---------------------------------------------------------------------------
+  netbox:
+    image: netboxcommunity/netbox:latest
+    container_name: netbox
+    restart: always
+    depends_on:
+      netbox_db:
+        condition: service_healthy
+      netbox_redis:
+        condition: service_healthy
+    environment:
+      - "TZ=${TZ:-UTC}"
+      - "DB_HOST=netbox_db"
+      - "DB_PORT=5432"
+      - "DB_NAME=${NETBOX_DB_NAME:-netbox}"
+      - "DB_USER=${NETBOX_DB_USER:-netbox}"
+      - "DB_PASSWORD=${NETBOX_DB_PASSWORD:-v01c3l@bNOW}"
+      - "REDIS_HOST=netbox_redis"
+      - "REDIS_PORT=6379"
+      - "REDIS_DATABASE=0"
+      - "REDIS_CACHE_HOST=netbox_redis"
+      - "REDIS_CACHE_PORT=6379"
+      - "REDIS_CACHE_DATABASE=1"
+      - "SECRET_KEY=${NETBOX_SECRET_KEY:-f79a941e411b0e352011d6199d7994017efaa36eb78c94294b0d0c8d19bf9e6a}"
+      - "ALLOWED_HOSTS=netbox.${DOMAIN:-iye.internal},netbox,localhost,127.0.0.1,docker-homelab.iye.internal"
+      - "CSRF_TRUSTED_ORIGINS=https://netbox.${DOMAIN:-iye.internal} http://netbox.${DOMAIN:-iye.internal} https://netbox.homelab.local"
+      - "METRICS_ENABLED=true"
+      - "SUPERUSER_NAME=${NETBOX_SUPERUSER_NAME:-admin}"
+      - "SUPERUSER_EMAIL=${NETBOX_SUPERUSER_EMAIL:-admin@iye.internal}"
+      - "SUPERUSER_PASSWORD=${NETBOX_SUPERUSER_PASSWORD:-v01c3l@bNOW}"
+      - "SUPERUSER_API_TOKEN=${NETBOX_API_TOKEN:-0123456789abcdef0123456789abcdef01234567}"
+      - "SKIP_SUPERUSER=false"
+      - "CORS_ORIGIN_ALLOW_ALL=True"
+    volumes:
+      - netbox-media-data:/opt/netbox/netbox/media
+      - netbox-reports-data:/opt/netbox/netbox/reports
+      - netbox-scripts-data:/opt/netbox/netbox/scripts
+    healthcheck:
+      test: /opt/netbox/health.sh
+      start_period: 90s
+      timeout: 5s
+      interval: 15s
+
+  # ---------------------------------------------------------------------------
+  # NetBox Worker: Background Redis Queue (RQ) Processor
+  # ---------------------------------------------------------------------------
+  netbox_worker:
+    image: netboxcommunity/netbox:latest
+    container_name: netbox_worker
+    restart: always
+    depends_on:
+      netbox:
+        condition: service_healthy
+    command:
+      - "/opt/netbox/venv/bin/python"
+      - "/opt/netbox/netbox/manage.py"
+      - "rqworker"
+    environment:
+      - "TZ=${TZ:-UTC}"
+      - "DB_HOST=netbox_db"
+      - "DB_PORT=5432"
+      - "DB_NAME=${NETBOX_DB_NAME:-netbox}"
+      - "DB_USER=${NETBOX_DB_USER:-netbox}"
+      - "DB_PASSWORD=${NETBOX_DB_PASSWORD:-v01c3l@bNOW}"
+      - "REDIS_HOST=netbox_redis"
+      - "REDIS_PORT=6379"
+      - "REDIS_DATABASE=0"
+      - "REDIS_CACHE_HOST=netbox_redis"
+      - "REDIS_CACHE_PORT=6379"
+      - "REDIS_CACHE_DATABASE=1"
+      - "SECRET_KEY=${NETBOX_SECRET_KEY:-f79a941e411b0e352011d6199d7994017efaa36eb78c94294b0d0c8d19bf9e6a}"
+    volumes:
+      - netbox-media-data:/opt/netbox/netbox/media:ro
+      - netbox-reports-data:/opt/netbox/netbox/reports
+      - netbox-scripts-data:/opt/netbox/netbox/scripts
+
 # Persistent Volumes
 # -----------------------------------------------------------------------------
 volumes:
@@ -393,6 +510,11 @@ volumes:
   caddy-data:
   caddy-config:
   trivy-cache:
+  netbox-db-data:
+  netbox-redis-data:
+  netbox-media-data:
+  netbox-reports-data:
+  netbox-scripts-data:
 
 # -----------------------------------------------------------------------------
 # Embedded Configurations (Self-Contained for Portainer Web Editor & Git)
@@ -444,6 +566,12 @@ configs:
       trivy.{$$DOMAIN:homelab.local} {
       	tls internal
       	reverse_proxy trivy:4954
+      }
+
+      # NetBox IPAM & DCIM
+      netbox.{$$DOMAIN:homelab.local} {
+      	tls internal
+      	reverse_proxy netbox:8080
       }
   prom_config:
     content: |
@@ -511,6 +639,16 @@ configs:
               labels:
                 role: "switch"
                 vendor: "mikrotik"
+
+        # NetBox IPAM & DCIM
+        - job_name: "netbox"
+          scrape_interval: 30s
+          metrics_path: "/metrics"
+          static_configs:
+            - targets: ["netbox:8080"]
+              labels:
+                role: "ipam"
+                service: "netbox"
   prom_alerts:
     content: |
       groups:
@@ -567,7 +705,7 @@ configs:
       layout:
         Network & Monitoring:
           style: row
-          columns: 4
+          columns: 5
         Virtualization & Servers:
           style: row
           columns: 4
@@ -611,6 +749,16 @@ configs:
               description: Time-Series Metrics & Alerting Engine
               server: my-docker
               container: prometheus
+          - NetBox:
+              icon: netbox
+              href: https://netbox.${DOMAIN:-iye.internal}
+              description: IPAM & Infrastructure Source of Truth
+              server: my-docker
+              container: netbox
+              widget:
+                type: netbox
+                url: http://netbox:8080
+                key: "${NETBOX_API_TOKEN:-0123456789abcdef0123456789abcdef01234567}" 
 
       - Virtualization & Servers:
           - Proxmox PVE 1:
