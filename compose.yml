@@ -447,8 +447,8 @@ services:
       - "REDIS_CACHE_PORT=6379"
       - "REDIS_CACHE_DATABASE=1"
       - "SECRET_KEY=${NETBOX_SECRET_KEY:-f79a941e411b0e352011d6199d7994017efaa36eb78c94294b0d0c8d19bf9e6a}"
-      - "ALLOWED_HOSTS=netbox.${DOMAIN:-iye.internal},netbox,localhost,127.0.0.1,docker-homelab.iye.internal"
-      - "CSRF_TRUSTED_ORIGINS=https://netbox.${DOMAIN:-iye.internal} http://netbox.${DOMAIN:-iye.internal} https://netbox.homelab.local"
+      - "ALLOWED_HOSTS=* netbox.${DOMAIN:-iye.internal} netbox localhost 127.0.0.1 docker-homelab.iye.internal"
+      - "CSRF_TRUSTED_ORIGINS=https://netbox.${DOMAIN:-iye.internal} http://netbox.${DOMAIN:-iye.internal} https://netbox.homelab.local http://netbox:8080"
       - "METRICS_ENABLED=true"
       - "SUPERUSER_NAME=${NETBOX_SUPERUSER_NAME:-admin}"
       - "SUPERUSER_EMAIL=${NETBOX_SUPERUSER_EMAIL:-admin@iye.internal}"
@@ -494,6 +494,7 @@ services:
       - "REDIS_CACHE_PORT=6379"
       - "REDIS_CACHE_DATABASE=1"
       - "SECRET_KEY=${NETBOX_SECRET_KEY:-f79a941e411b0e352011d6199d7994017efaa36eb78c94294b0d0c8d19bf9e6a}"
+      - "ALLOWED_HOSTS=*"
     volumes:
       - netbox-media-data:/opt/netbox/netbox/media:ro
       - netbox-reports-data:/opt/netbox/netbox/reports
