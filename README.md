@@ -109,7 +109,7 @@ These records allow LibreNMS, Prometheus, and Homepage to reach your physical ha
 #### Example `/etc/hosts` Block (for local testing):
 ```hosts
 # Homelab Stack Services (Docker Host)
-192.168.254.164  homelab.iye.internal iye.internal librenms.iye.internal grafana.iye.internal prometheus.iye.internal oxidized.iye.internal trivy.iye.internal docker-homelab.iye.internal
+192.168.254.164  homelab.iye.internal iye.internal netbox.iye.internal librenms.iye.internal grafana.iye.internal prometheus.iye.internal oxidized.iye.internal trivy.iye.internal docker-homelab.iye.internal
 
 # Homelab Devices
 192.168.254.111  virt-1.iye.internal
