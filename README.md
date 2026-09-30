@@ -243,6 +243,19 @@ To guarantee that your Docker containers (like Prometheus, LibreNMS, and Oxidize
 
 ---
 
+## Pre-Provisioned Grafana Dashboards
+
+All Grafana dashboards are automatically provisioned into the **Homelab** folder upon deployment. Telemetry is populated directly by the Prometheus scraping engine:
+
+| Dashboard | File | Metrics & Telemetry Covered |
+| :--- | :--- | :--- |
+| **Homelab Overview** | [`homelab-overview.json`](grafana/provisioning/dashboards/json/homelab-overview.json) | Real-time target reachability (Up/Down) for all jobs, cluster resource averages, active WiFi client totals, and Caddy HTTP request rates/p95 latency. |
+| **Proxmox VE Cluster** | [`proxmox-cluster.json`](grafana/provisioning/dashboards/json/proxmox-cluster.json) | Total cluster capacity (28 cores, 77 GB RAM), per-node CPU/RAM utilization gauges, load averages, ZFS ARC cache size & hit rates, root storage, and network interface throughput (`virt-1`, `virt-2`, `virt-3`). |
+| **OpenWrt APs & WiFi** | [`openwrt-wifi.json`](grafana/provisioning/dashboards/json/openwrt-wifi.json) | Active client counts (77+ clients), client distribution per AP, 5 GHz vs 2.4 GHz radio frequency split, 802.11s mesh backhaul status & signal dBm, and AP CPU/memory health across all 6 APs. |
+| **Docker Host Telemetry** | [`docker-host.json`](grafana/provisioning/dashboards/json/docker-host.json) | Host uptime, CPU mode breakdown (user, system, iowait), 1m/5m/15m load averages, memory allocation (used, cached, buffers, swap), NVMe disk space & I/O, and `eth0` network throughput. |
+
+---
+
 ## Post-Deployment: Oxidized Network Backups
 
 By default, Oxidized automatically tracks your switches and access points via the built-in [oxidized/router.db](oxidized/router.db) inventory.
