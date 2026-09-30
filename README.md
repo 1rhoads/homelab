@@ -171,14 +171,17 @@ Connect via SSH or WebFig terminal to each switch:
 SSH into each OpenWrt AP:
 
 ```sh
-# A. Install Prometheus Node Exporter with WiFi Telemetry
-opkg update
-opkg install prometheus-node-exporter-lua \
-             prometheus-node-exporter-lua-wifi \
-             prometheus-node-exporter-lua-netstat \
-             prometheus-node-exporter-lua-openwrt
+# A. Install Prometheus Node Exporter with WiFi Telemetry (OpenWrt 24/25+ uses apk; legacy versions use opkg)
+apk update
+apk add prometheus-node-exporter-lua \
+        prometheus-node-exporter-lua-wifi \
+        prometheus-node-exporter-lua-wifi_stations \
+        prometheus-node-exporter-lua-netstat \
+        prometheus-node-exporter-lua-openwrt
+uci set prometheus-node-exporter-lua.main.listen_interface='*'
+uci commit prometheus-node-exporter-lua
 /etc/init.d/prometheus-node-exporter-lua enable
-/etc/init.d/prometheus-node-exporter-lua start
+/etc/init.d/prometheus-node-exporter-lua restart
 
 # B. Enable SNMP for LibreNMS
 opkg install snmpd
