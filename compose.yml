@@ -15,6 +15,8 @@ services:
     configs:
       - source: caddyfile
         target: /etc/caddy/Caddyfile
+      - source: trivy_landing
+        target: /srv/trivy/index.html
     volumes:
       - caddy-data:/data
       - caddy-config:/config
@@ -566,7 +568,16 @@ configs:
       # Trivy Security Scanner API
       trivy.{$$DOMAIN:homelab.local} {
       	tls internal
-      	reverse_proxy trivy:4954
+
+      	@root path /
+      	handle @root {
+      		root * /srv/trivy
+      		file_server
+      	}
+
+      	handle {
+      		reverse_proxy trivy:4954
+      	}
       }
 
       # NetBox IPAM & DCIM
@@ -574,6 +585,199 @@ configs:
       	tls internal
       	reverse_proxy netbox:8080
       }
+  trivy_landing:
+    content: |
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Trivy Security Scanner | Homelab</title>
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #0f172a;
+            color: #f1f5f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1.5rem;
+          }
+          .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 1rem;
+            max-width: 680px;
+            width: 100%;
+            padding: 2.25rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+          }
+          .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 1.25rem;
+            margin-bottom: 1.5rem;
+          }
+          .title-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+          }
+          .icon {
+            font-size: 2rem;
+          }
+          h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #ffffff;
+          }
+          .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: #064e3b;
+            color: #34d399;
+            border: 1px solid #059669;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+          }
+          .badge-dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            background: #34d399;
+            border-radius: 9999px;
+            box-shadow: 0 0 8px #34d399;
+          }
+          p {
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 1.25rem;
+            font-size: 0.95rem;
+          }
+          h2 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+          }
+          .code-block {
+            background: #090d16;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            padding: 0.85rem 1rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.85rem;
+            color: #38bdf8;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+          }
+          .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid #334155;
+          }
+          .info-item {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+          }
+          .info-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            margin-bottom: 0.25rem;
+          }
+          .info-val {
+            font-size: 0.9rem;
+            color: #f8fafc;
+            font-weight: 500;
+          }
+          .info-val a {
+            color: #38bdf8;
+            text-decoration: none;
+          }
+          .info-val a:hover {
+            text-decoration: underline;
+          }
+          .footer {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #64748b;
+          }
+          .footer a {
+            color: #94a3b8;
+            text-decoration: none;
+          }
+          .footer a:hover {
+            color: #38bdf8;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="header">
+            <div class="title-group">
+              <span class="icon">&#128737;&#65039;</span>
+              <div>
+                <h1>Trivy Security Scanner</h1>
+              </div>
+            </div>
+            <div class="badge">
+              <span class="badge-dot"></span>
+              API Online
+            </div>
+          </div>
+
+          <p>
+            This is the centralized <strong>Trivy Vulnerability &amp; Security Scanner Server</strong> for the homelab.
+            It runs in headless server/RPC mode to perform vulnerability, misconfiguration, and secret scanning for container images, git repositories, and filesystems.
+          </p>
+
+          <h2>Client Usage Examples</h2>
+          <p>Scan a container image remotely against this server:</p>
+          <div class="code-block">trivy image --server https://trivy.iye.internal &lt;image:tag&gt;</div>
+
+          <p>Scan a local filesystem or directory:</p>
+          <div class="code-block">trivy fs --server https://trivy.iye.internal .</div>
+
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Server Mode</div>
+              <div class="info-val">Twirp RPC / REST (:4954)</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Health Check</div>
+              <div class="info-val"><a href="/healthz">/healthz (200 OK)</a></div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Reverse Proxy</div>
+              <div class="info-val">Caddy (Internal TLS)</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Documentation</div>
+              <div class="info-val"><a href="https://aquasecurity.github.io/trivy/latest/" target="_blank" rel="noopener">aquasecurity.github.io/trivy</a></div>
+            </div>
+          </div>
+
+          <div class="footer">
+            <a href="https://homelab.iye.internal">&larr; Return to Homelab Operations Dashboard</a>
+          </div>
+        </div>
+      </body>
+      </html>
   prom_config:
     content: |
       global:
