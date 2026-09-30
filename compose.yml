@@ -828,7 +828,6 @@ configs:
       datasources:
         - name: Prometheus
           type: prometheus
-          uid: prometheus
           access: proxy
           url: http://prometheus:9090
           isDefault: true
@@ -883,7 +882,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -922,7 +921,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "editorMode": "code",
                 "expr": "up",
                 "legendFormat": "{{job}} / {{instance}}",
@@ -934,7 +933,7 @@ configs:
             "type": "stat"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -957,7 +956,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "count(up == 1)",
                 "legendFormat": "Targets Online",
                 "refId": "A"
@@ -967,7 +966,7 @@ configs:
             "type": "stat"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -990,7 +989,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(wifi_stations{ifname!~'.*mesh.*'})",
                 "legendFormat": "Clients",
                 "refId": "A"
@@ -1000,7 +999,7 @@ configs:
             "type": "stat"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -1023,7 +1022,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "count(up{job='proxmox'} == 1)",
                 "legendFormat": "Hypervisors",
                 "refId": "A"
@@ -1033,7 +1032,7 @@ configs:
             "type": "stat"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -1056,7 +1055,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "count(up{job='openwrt'} == 1)",
                 "legendFormat": "Access Points",
                 "refId": "A"
@@ -1073,7 +1072,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -1100,7 +1099,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "avg(100 - (rate(node_cpu_seconds_total{job='proxmox',mode='idle'}[5m]) * 100))",
                 "legendFormat": "Proxmox Cluster CPU",
                 "refId": "A"
@@ -1110,7 +1109,7 @@ configs:
             "type": "gauge"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -1137,7 +1136,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "avg((1 - (node_memory_MemAvailable_bytes{job='proxmox'} / node_memory_MemTotal_bytes{job='proxmox'})) * 100)",
                 "legendFormat": "Proxmox Cluster RAM",
                 "refId": "A"
@@ -1147,7 +1146,7 @@ configs:
             "type": "gauge"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -1174,7 +1173,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "100 - (avg(rate(node_cpu_seconds_total{job='docker-host',mode='idle'}[5m])) * 100)",
                 "legendFormat": "Docker Host CPU",
                 "refId": "A"
@@ -1184,7 +1183,7 @@ configs:
             "type": "gauge"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -1211,7 +1210,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "(1 - (node_memory_MemAvailable_bytes{job='docker-host'} / node_memory_MemTotal_bytes{job='docker-host'})) * 100",
                 "legendFormat": "Docker Host RAM",
                 "refId": "A"
@@ -1221,7 +1220,7 @@ configs:
             "type": "gauge"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -1241,7 +1240,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{job='proxmox',mode='idle'}[5m])) * 100)",
                 "legendFormat": "{{instance}}",
                 "refId": "A"
@@ -1251,7 +1250,7 @@ configs:
             "type": "timeseries"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -1271,7 +1270,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "(1 - (node_memory_MemAvailable_bytes{job='proxmox'} / node_memory_MemTotal_bytes{job='proxmox'})) * 100",
                 "legendFormat": "{{instance}}",
                 "refId": "A"
@@ -1288,7 +1287,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -1309,7 +1308,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(wifi_stations{job='openwrt',ifname!~'.*mesh.*'}) by (instance)",
                 "legendFormat": "{{instance}}",
                 "refId": "A"
@@ -1319,7 +1318,7 @@ configs:
             "type": "timeseries"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -1339,7 +1338,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "node_load1{job='openwrt'}",
                 "legendFormat": "{{instance}}",
                 "refId": "A"
@@ -1356,7 +1355,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -1376,7 +1375,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(rate(caddy_http_requests_total[5m])) by (server)",
                 "legendFormat": "{{server}}",
                 "refId": "A"
@@ -1386,7 +1385,7 @@ configs:
             "type": "timeseries"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -1420,7 +1419,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "caddy_reverse_proxy_upstreams_healthy",
                 "legendFormat": "{{upstream}}",
                 "refId": "A"
@@ -1430,7 +1429,7 @@ configs:
             "type": "stat"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -1450,7 +1449,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "histogram_quantile(0.95, sum(rate(caddy_http_request_duration_seconds_bucket[5m])) by (le))",
                 "legendFormat": "p95 Latency",
                 "refId": "A"
@@ -1505,7 +1504,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -1528,7 +1527,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "count(up{job='proxmox'} == 1)",
                 "legendFormat": "Hypervisors",
                 "refId": "A"
@@ -1538,7 +1537,7 @@ configs:
             "type": "stat"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -1561,7 +1560,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "count(count(node_cpu_seconds_total{job='proxmox'}) by (instance, cpu))",
                 "legendFormat": "Total Cores",
                 "refId": "A"
@@ -1571,7 +1570,7 @@ configs:
             "type": "stat"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -1595,7 +1594,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(node_memory_MemTotal_bytes{job='proxmox'})",
                 "legendFormat": "Cluster RAM",
                 "refId": "A"
@@ -1605,7 +1604,7 @@ configs:
             "type": "stat"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -1628,7 +1627,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "avg(node_load1{job='proxmox'})",
                 "legendFormat": "Cluster Load Avg",
                 "refId": "A"
@@ -1645,7 +1644,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -1672,7 +1671,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{job='proxmox',instance=~'$$node',mode='idle'}[5m])) * 100)",
                 "legendFormat": "{{instance}}",
                 "refId": "A"
@@ -1682,7 +1681,7 @@ configs:
             "type": "gauge"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -1702,7 +1701,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{job='proxmox',instance=~'$$node',mode='idle'}[5m])) * 100)",
                 "legendFormat": "{{instance}}",
                 "refId": "A"
@@ -1712,7 +1711,7 @@ configs:
             "type": "timeseries"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -1732,13 +1731,13 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "node_load1{job='proxmox',instance=~'$$node'}",
                 "legendFormat": "{{instance}} (1m)",
                 "refId": "A"
               },
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "node_load5{job='proxmox',instance=~'$$node'}",
                 "legendFormat": "{{instance}} (5m)",
                 "refId": "B"
@@ -1755,7 +1754,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -1782,7 +1781,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "(1 - (node_memory_MemAvailable_bytes{job='proxmox',instance=~'$$node'} / node_memory_MemTotal_bytes{job='proxmox',instance=~'$$node'})) * 100",
                 "legendFormat": "{{instance}}",
                 "refId": "A"
@@ -1792,7 +1791,7 @@ configs:
             "type": "bargauge"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -1812,7 +1811,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "node_memory_MemTotal_bytes{job='proxmox',instance=~'$$node'} - node_memory_MemAvailable_bytes{job='proxmox',instance=~'$$node'}",
                 "legendFormat": "{{instance}} Used",
                 "refId": "A"
@@ -1822,7 +1821,7 @@ configs:
             "type": "timeseries"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -1842,7 +1841,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "node_zfs_arc_size{job='proxmox',instance=~'$$node'}",
                 "legendFormat": "{{instance}} ARC",
                 "refId": "A"
@@ -1852,7 +1851,7 @@ configs:
             "type": "timeseries"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -1872,7 +1871,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "rate(node_zfs_arc_hits{job='proxmox',instance=~'$$node'}[5m]) / (rate(node_zfs_arc_hits{job='proxmox',instance=~'$$node'}[5m]) + rate(node_zfs_arc_misses{job='proxmox',instance=~'$$node'}[5m])) * 100",
                 "legendFormat": "{{instance}} Hit Rate",
                 "refId": "A"
@@ -1889,7 +1888,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -1916,7 +1915,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "(1 - (node_filesystem_avail_bytes{job='proxmox',instance=~'$$node',mountpoint='/'} / node_filesystem_size_bytes{job='proxmox',instance=~'$$node',mountpoint='/'})) * 100",
                 "legendFormat": "{{instance}} (root /)",
                 "refId": "A"
@@ -1926,7 +1925,7 @@ configs:
             "type": "bargauge"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -1946,7 +1945,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "node_filesystem_avail_bytes{job='proxmox',instance=~'$$node',mountpoint='/'}",
                 "legendFormat": "{{instance}} Avail",
                 "refId": "A"
@@ -1963,7 +1962,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -1983,7 +1982,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(rate(node_network_receive_bytes_total{job='proxmox',instance=~'$$node',device!~'lo|veth.*|fw.*|tap.*'}[5m])) by (instance, device)",
                 "legendFormat": "{{instance}} - {{device}}",
                 "refId": "A"
@@ -1993,7 +1992,7 @@ configs:
             "type": "timeseries"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -2013,7 +2012,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(rate(node_network_transmit_bytes_total{job='proxmox',instance=~'$$node',device!~'lo|veth.*|fw.*|tap.*'}[5m])) by (instance, device)",
                 "legendFormat": "{{instance}} - {{device}}",
                 "refId": "A"
@@ -2037,7 +2036,7 @@ configs:
               },
               "datasource": {
                 "type": "prometheus",
-                "uid": "prometheus"
+                "uid": "Prometheus"
               },
               "definition": "label_values(node_cpu_seconds_total{job='proxmox'}, instance)",
               "hide": 0,
@@ -2097,7 +2096,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -2120,7 +2119,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(wifi_stations{job='openwrt',ifname!~'.*mesh.*'})",
                 "legendFormat": "Active Clients",
                 "refId": "A"
@@ -2130,7 +2129,7 @@ configs:
             "type": "stat"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -2153,7 +2152,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "count(up{job='openwrt'} == 1)",
                 "legendFormat": "APs Online",
                 "refId": "A"
@@ -2163,7 +2162,7 @@ configs:
             "type": "stat"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -2186,7 +2185,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(wifi_stations{job='openwrt',ifname='phy2-mesh0'})",
                 "legendFormat": "Mesh Peers",
                 "refId": "A"
@@ -2196,7 +2195,7 @@ configs:
             "type": "stat"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -2219,7 +2218,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "avg(node_load1{job='openwrt'})",
                 "legendFormat": "Fleet Load",
                 "refId": "A"
@@ -2236,7 +2235,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "palette-classic" },
@@ -2253,7 +2252,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(wifi_stations{job='openwrt',instance=~'$$ap',ifname!~'.*mesh.*'}) by (instance)",
                 "legendFormat": "{{instance}}",
                 "refId": "A"
@@ -2263,7 +2262,7 @@ configs:
             "type": "bargauge"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -2284,7 +2283,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(wifi_stations{job='openwrt',instance=~'$$ap',ifname!~'.*mesh.*'}) by (instance)",
                 "legendFormat": "{{instance}}",
                 "refId": "A"
@@ -2294,7 +2293,7 @@ configs:
             "type": "timeseries"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -2314,13 +2313,13 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(wifi_stations{job='openwrt',instance=~'$$ap',ifname=~'phy0.*'}) by (instance)",
                 "legendFormat": "{{instance}} (5GHz)",
                 "refId": "A"
               },
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(wifi_stations{job='openwrt',instance=~'$$ap',ifname=~'phy1.*'}) by (instance)",
                 "legendFormat": "{{instance}} (2.4GHz)",
                 "refId": "B"
@@ -2337,7 +2336,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -2357,7 +2356,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "avg(wifi_station_signal_dbm{job='openwrt',instance=~'$$ap',ifname!~'.*mesh.*'}) by (instance)",
                 "legendFormat": "{{instance}} Avg RSSI",
                 "refId": "A"
@@ -2367,7 +2366,7 @@ configs:
             "type": "timeseries"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -2387,7 +2386,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "avg(wifi_station_signal_dbm{job='openwrt',instance=~'$$ap',ifname='phy2-mesh0'}) by (instance)",
                 "legendFormat": "{{instance}} Mesh Link RSSI",
                 "refId": "A"
@@ -2404,7 +2403,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -2424,7 +2423,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "node_load1{job='openwrt',instance=~'$$ap'}",
                 "legendFormat": "{{instance}}",
                 "refId": "A"
@@ -2434,7 +2433,7 @@ configs:
             "type": "timeseries"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -2454,7 +2453,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "(1 - (node_memory_MemFree_bytes{job='openwrt',instance=~'$$ap'} / node_memory_MemTotal_bytes{job='openwrt',instance=~'$$ap'})) * 100",
                 "legendFormat": "{{instance}}",
                 "refId": "A"
@@ -2464,7 +2463,7 @@ configs:
             "type": "timeseries"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -2484,7 +2483,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(rate(node_network_receive_bytes_total{job='openwrt',instance=~'$$ap',device=~'eth.*|br-lan'}[5m])) by (instance)",
                 "legendFormat": "{{instance}} Traffic",
                 "refId": "A"
@@ -2508,7 +2507,7 @@ configs:
               },
               "datasource": {
                 "type": "prometheus",
-                "uid": "prometheus"
+                "uid": "Prometheus"
               },
               "definition": "label_values(node_load1{job='openwrt'}, instance)",
               "hide": 0,
@@ -2568,7 +2567,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -2592,7 +2591,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "time() - node_boot_time_seconds{job='docker-host'}",
                 "legendFormat": "Uptime",
                 "refId": "A"
@@ -2602,7 +2601,7 @@ configs:
             "type": "stat"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -2629,7 +2628,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "100 - (avg(rate(node_cpu_seconds_total{job='docker-host',mode='idle'}[5m])) * 100)",
                 "legendFormat": "CPU",
                 "refId": "A"
@@ -2639,7 +2638,7 @@ configs:
             "type": "gauge"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -2666,7 +2665,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "(1 - (node_memory_MemAvailable_bytes{job='docker-host'} / node_memory_MemTotal_bytes{job='docker-host'})) * 100",
                 "legendFormat": "RAM",
                 "refId": "A"
@@ -2676,7 +2675,7 @@ configs:
             "type": "gauge"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -2703,7 +2702,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "(1 - (node_filesystem_avail_bytes{job='docker-host',mountpoint='/'} / node_filesystem_size_bytes{job='docker-host',mountpoint='/'})) * 100",
                 "legendFormat": "Disk",
                 "refId": "A"
@@ -2720,7 +2719,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -2741,7 +2740,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(rate(node_cpu_seconds_total{job='docker-host',mode!='idle'}[5m])) by (mode) / count(node_cpu_seconds_total{job='docker-host',mode='idle'}) * 100",
                 "legendFormat": "{{mode}}",
                 "refId": "A"
@@ -2751,7 +2750,7 @@ configs:
             "type": "timeseries"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -2771,19 +2770,19 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "node_load1{job='docker-host'}",
                 "legendFormat": "Load 1m",
                 "refId": "A"
               },
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "node_load5{job='docker-host'}",
                 "legendFormat": "Load 5m",
                 "refId": "B"
               },
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "node_load15{job='docker-host'}",
                 "legendFormat": "Load 15m",
                 "refId": "C"
@@ -2800,7 +2799,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -2820,19 +2819,19 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "node_memory_MemTotal_bytes{job='docker-host'} - node_memory_MemAvailable_bytes{job='docker-host'}",
                 "legendFormat": "Used",
                 "refId": "A"
               },
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "node_memory_MemAvailable_bytes{job='docker-host'}",
                 "legendFormat": "Available",
                 "refId": "B"
               },
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "node_memory_Cached_bytes{job='docker-host'} + node_memory_Buffers_bytes{job='docker-host'}",
                 "legendFormat": "Cached & Buffers",
                 "refId": "C"
@@ -2842,7 +2841,7 @@ configs:
             "type": "timeseries"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -2862,13 +2861,13 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "node_memory_SwapTotal_bytes{job='docker-host'} - node_memory_SwapFree_bytes{job='docker-host'}",
                 "legendFormat": "Swap Used",
                 "refId": "A"
               },
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "node_memory_SwapFree_bytes{job='docker-host'}",
                 "legendFormat": "Swap Free",
                 "refId": "B"
@@ -2885,7 +2884,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "color": { "mode": "thresholds" },
@@ -2912,7 +2911,7 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "(1 - (node_filesystem_avail_bytes{job='docker-host',mountpoint='/'} / node_filesystem_size_bytes{job='docker-host',mountpoint='/'})) * 100",
                 "legendFormat": "Root (/)",
                 "refId": "A"
@@ -2922,7 +2921,7 @@ configs:
             "type": "bargauge"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -2942,13 +2941,13 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(rate(node_disk_read_bytes_total{job='docker-host'}[5m]))",
                 "legendFormat": "Read",
                 "refId": "A"
               },
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(rate(node_disk_written_bytes_total{job='docker-host'}[5m]))",
                 "legendFormat": "Write",
                 "refId": "B"
@@ -2965,7 +2964,7 @@ configs:
             "type": "row"
           },
           {
-            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "datasource": { "type": "prometheus", "uid": "Prometheus" },
             "fieldConfig": {
               "defaults": {
                 "custom": {
@@ -2985,13 +2984,13 @@ configs:
             },
             "targets": [
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(rate(node_network_receive_bytes_total{job='docker-host',device!~'lo|docker.*|veth.*|br.*'}[5m])) by (device)",
                 "legendFormat": "Rx ({{device}})",
                 "refId": "A"
               },
               {
-                "datasource": { "type": "prometheus", "uid": "prometheus" },
+                "datasource": { "type": "prometheus", "uid": "Prometheus" },
                 "expr": "sum(rate(node_network_transmit_bytes_total{job='docker-host',device!~'lo|docker.*|veth.*|br.*'}[5m])) by (device)",
                 "legendFormat": "Tx ({{device}})",
                 "refId": "B"
