@@ -29,7 +29,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -52,7 +52,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
           "expr": "sum(wifi_stations{job='openwrt',ifname!~'.*mesh.*'})",
           "legendFormat": "Active Clients",
           "refId": "A"
@@ -62,7 +62,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -85,7 +85,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
           "expr": "count(up{job='openwrt'} == 1)",
           "legendFormat": "APs Online",
           "refId": "A"
@@ -95,7 +95,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -118,7 +118,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
           "expr": "sum(wifi_stations{job='openwrt',ifname='phy2-mesh0'})",
           "legendFormat": "Mesh Peers",
           "refId": "A"
@@ -128,7 +128,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -151,7 +151,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
           "expr": "avg(node_load1{job='openwrt'})",
           "legendFormat": "Fleet Load",
           "refId": "A"
@@ -168,7 +168,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -185,7 +185,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
           "expr": "sum(wifi_stations{job='openwrt',instance=~'$ap',ifname!~'.*mesh.*'}) by (instance)",
           "legendFormat": "{{instance}}",
           "refId": "A"
@@ -195,7 +195,7 @@
       "type": "bargauge"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -216,7 +216,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
           "expr": "sum(wifi_stations{job='openwrt',instance=~'$ap',ifname!~'.*mesh.*'}) by (instance)",
           "legendFormat": "{{instance}}",
           "refId": "A"
@@ -226,7 +226,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -246,13 +246,13 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
           "expr": "sum(wifi_stations{job='openwrt',instance=~'$ap',ifname=~'phy0.*'}) by (instance)",
           "legendFormat": "{{instance}} (5GHz)",
           "refId": "A"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
           "expr": "sum(wifi_stations{job='openwrt',instance=~'$ap',ifname=~'phy1.*'}) by (instance)",
           "legendFormat": "{{instance}} (2.4GHz)",
           "refId": "B"
@@ -269,7 +269,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -289,7 +289,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
           "expr": "avg(wifi_station_signal_dbm{job='openwrt',instance=~'$ap',ifname!~'.*mesh.*'}) by (instance)",
           "legendFormat": "{{instance}} Avg RSSI",
           "refId": "A"
@@ -299,7 +299,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -319,7 +319,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
           "expr": "avg(wifi_station_signal_dbm{job='openwrt',instance=~'$ap',ifname='phy2-mesh0'}) by (instance)",
           "legendFormat": "{{instance}} Mesh Link RSSI",
           "refId": "A"
@@ -336,7 +336,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -356,7 +356,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
           "expr": "node_load1{job='openwrt',instance=~'$ap'}",
           "legendFormat": "{{instance}}",
           "refId": "A"
@@ -366,7 +366,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -386,7 +386,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
           "expr": "(1 - (node_memory_MemFree_bytes{job='openwrt',instance=~'$ap'} / node_memory_MemTotal_bytes{job='openwrt',instance=~'$ap'})) * 100",
           "legendFormat": "{{instance}}",
           "refId": "A"
@@ -396,7 +396,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "Prometheus" },
+      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -416,7 +416,7 @@
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "Prometheus" },
+          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
           "expr": "sum(rate(node_network_receive_bytes_total{job='openwrt',instance=~'$ap',device=~'eth.*|br-lan'}[5m])) by (instance)",
           "legendFormat": "{{instance}} Traffic",
           "refId": "A"
@@ -440,7 +440,7 @@
         },
         "datasource": {
           "type": "prometheus",
-          "uid": "Prometheus"
+          "uid": "PBFA97CFB590B2093"
         },
         "definition": "label_values(node_load1{job='openwrt'}, instance)",
         "hide": 0,
