@@ -24,3 +24,11 @@ oxidized/configs
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Private SSH and TLS keys
+*.key
+*.pem
+*.pub
+id_*
+ansible_ed25519*
+
