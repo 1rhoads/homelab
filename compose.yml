@@ -4,6 +4,7 @@ services:
   # ---------------------------------------------------------------------------
   caddy:
     image: caddy:2-alpine
+    pull_policy: always
     container_name: homelab_caddy
     restart: always
     ports:
@@ -26,6 +27,7 @@ services:
   # ---------------------------------------------------------------------------
   homepage:
     image: ghcr.io/gethomepage/homepage:latest
+    pull_policy: always
     container_name: homepage
     restart: always
     ports:
@@ -87,6 +89,7 @@ services:
   # ---------------------------------------------------------------------------
   redis:
     image: redis:7.2-alpine
+    pull_policy: always
     container_name: librenms_redis
     restart: always
     environment:
@@ -97,6 +100,7 @@ services:
   # ---------------------------------------------------------------------------
   msmtpd:
     image: crazymax/msmtpd:latest
+    pull_policy: always
     container_name: librenms_msmtpd
     restart: always
     environment:
@@ -114,6 +118,7 @@ services:
   # ---------------------------------------------------------------------------
   librenms:
     image: librenms/librenms:latest
+    pull_policy: always
     container_name: librenms
     hostname: librenms
     restart: always
@@ -154,6 +159,7 @@ services:
   # ---------------------------------------------------------------------------
   dispatcher:
     image: librenms/librenms:latest
+    pull_policy: always
     container_name: librenms_dispatcher
     hostname: librenms-dispatcher
     restart: always
@@ -189,6 +195,7 @@ services:
   # ---------------------------------------------------------------------------
   syslogng:
     image: librenms/librenms:latest
+    pull_policy: always
     container_name: librenms_syslogng
     hostname: librenms-syslogng
     restart: always
@@ -226,6 +233,7 @@ services:
   # ---------------------------------------------------------------------------
   snmptrapd:
     image: librenms/librenms:latest
+    pull_policy: always
     container_name: librenms_snmptrapd
     hostname: librenms-snmptrapd
     restart: always
@@ -263,6 +271,7 @@ services:
   # ---------------------------------------------------------------------------
   oxidized:
     image: oxidized/oxidized:latest
+    pull_policy: always
     container_name: librenms_oxidized
     restart: always
     ports:
@@ -297,6 +306,7 @@ services:
   # ---------------------------------------------------------------------------
   prometheus:
     image: prom/prometheus:latest
+    pull_policy: always
     container_name: prometheus
     user: "0:0"
     restart: always
@@ -320,6 +330,7 @@ services:
   # ---------------------------------------------------------------------------
   grafana:
     image: grafana/grafana-oss:latest
+    pull_policy: always
     container_name: grafana
     restart: always
     ports:
@@ -354,6 +365,7 @@ services:
   # ---------------------------------------------------------------------------
   trivy:
     image: aquasec/trivy:latest
+    pull_policy: always
     container_name: trivy
     restart: always
     command:
@@ -373,6 +385,7 @@ services:
   # ---------------------------------------------------------------------------
   trivy-exporter:
     image: aquasec/trivy:latest
+    pull_policy: always
     container_name: trivy_exporter
     restart: always
     entrypoint: ["/bin/sh", "-c", "apk add --no-cache python3 >/dev/null 2>&1 && exec python3 /app/exporter.py"]
@@ -398,6 +411,7 @@ services:
   # ---------------------------------------------------------------------------
   node-exporter:
     image: prom/node-exporter:latest
+    pull_policy: always
     container_name: node_exporter
     restart: always
     command:
@@ -436,6 +450,7 @@ services:
   # ---------------------------------------------------------------------------
   netbox_redis:
     image: redis:7-alpine
+    pull_policy: always
     container_name: netbox_redis
     restart: always
     command:
@@ -455,6 +470,7 @@ services:
   # ---------------------------------------------------------------------------
   netbox:
     image: netboxcommunity/netbox:latest
+    pull_policy: always
     container_name: netbox
     restart: always
     depends_on:
@@ -500,6 +516,7 @@ services:
   # ---------------------------------------------------------------------------
   netbox_worker:
     image: netboxcommunity/netbox:latest
+    pull_policy: always
     container_name: netbox_worker
     restart: always
     depends_on:
