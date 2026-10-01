@@ -407,6 +407,29 @@ services:
       - trivy
 
   # ---------------------------------------------------------------------------
+  # Ansible Semaphore: Web UI & Automation Control Plane
+  # ---------------------------------------------------------------------------
+  semaphore:
+    image: semaphoreui/semaphore:latest
+    pull_policy: always
+    container_name: semaphore
+    restart: always
+    ports:
+      - "3002:3000"
+    environment:
+      - "TZ=${TZ:-UTC}"
+      - "SEMAPHORE_DB_DIALECT=sqlite"
+      - "SEMAPHORE_DB_PATH=/etc/semaphore/semaphore.db"
+      - "SEMAPHORE_ADMIN=${SEMAPHORE_ADMIN_USER:-admin}"
+      - "SEMAPHORE_ADMIN_PASSWORD=${SEMAPHORE_ADMIN_PASSWORD:-v01c3l@bNOW}"
+      - "SEMAPHORE_ADMIN_NAME=Homelab Admin"
+      - "SEMAPHORE_ADMIN_EMAIL=admin@${DOMAIN:-iye.internal}"
+      - "SEMAPHORE_PLAYBOOK_PATH=/tmp/semaphore"
+      - "SEMAPHORE_ACCESS_KEY_ENCRYPTION=${SEMAPHORE_ACCESS_KEY_ENCRYPTION:-a8f7c9e1b2d45678a9c0e2f4b6d81012}"
+    volumes:
+      - semaphore-data:/etc/semaphore
+
+  # ---------------------------------------------------------------------------
   # Node Exporter: Docker Host Hardware & OS Telemetry
   # ---------------------------------------------------------------------------
   node-exporter:
@@ -562,6 +585,7 @@ volumes:
   netbox-media-data:
   netbox-reports-data:
   netbox-scripts-data:
+  semaphore-data:
 
 # -----------------------------------------------------------------------------
 # Embedded Configurations (Self-Contained for Portainer Web Editor & Git)
@@ -628,6 +652,12 @@ configs:
       netbox.{$$DOMAIN:homelab.local} {
       	tls internal
       	reverse_proxy netbox:8080
+      }
+
+      # Ansible Semaphore Automation Web UI
+      semaphore.{$$DOMAIN:homelab.local} {
+      	tls internal
+      	reverse_proxy semaphore:3000
       }
   trivy_landing:
     content: |
@@ -1104,6 +1134,12 @@ configs:
               description: Trivy CVE & Container Security Telemetry
               server: my-docker
               container: trivy_exporter
+          - Semaphore:
+              icon: ansible
+              href: https://semaphore.${DOMAIN:-iye.internal}
+              description: Ansible Automation & Patching Control Plane
+              server: my-docker
+              container: semaphore
   homepage_widgets:
     content: |
       ---

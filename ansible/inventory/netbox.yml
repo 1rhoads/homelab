@@ -1,0 +1,26 @@
+# ==============================================================================
+# NetBox Dynamic Inventory Configuration for Ansible
+# ==============================================================================
+plugin: netbox.netbox.nb_inventory
+api_endpoint: "https://netbox.iye.internal"
+token: "0123456789abcdef0123456789abcdef01234567"
+validate_certs: false
+config_context: true
+
+# Grouping and filtering
+group_by:
+  - role
+  - platform
+  - device_type
+  - site
+
+# Flatten nested device attributes
+flatten_custom_fields: true
+
+# Query device parameters
+query_filters:
+  - status: "active"
+
+compose:
+  ansible_host: primary_ip4.address.split('/')[0]
+  ansible_user: "root"

@@ -1,0 +1,43 @@
+---
+# ==============================================================================
+# Playbook: OpenWrt Access Point Rolling Package & Security Updates
+# ==============================================================================
+- name: Patch OpenWrt Access Points (Rolling 1-by-1)
+  hosts: openwrt
+  serial: 1
+  gather_facts: false
+
+  vars:
+    upgrade_packages: false # Set to true to automatically upgrade packages
+
+  tasks:
+    - name: Update OpenWrt OPKG package lists
+      ansible.builtin.raw: opkg update
+      register: opkg_update
+      changed_when: "'Updated list of available packages' in opkg_update.stdout"
+
+    - name: List upgradable packages on AP
+      ansible.builtin.raw: opkg list-upgradable
+      register: upgradable_pkgs
+      changed_when: false
+
+    - name: Display available updates for {{ inventory_hostname }}
+      ansible.builtin.debug:
+        msg: "Upgradable packages on {{ inventory_hostname }}:\n{{ upgradable_pkgs.stdout }}"
+
+    - name: Apply package upgrades if requested
+      when: upgrade_packages | bool and upgradable_pkgs.stdout != ""
+      ansible.builtin.raw: |
+        for pkg in $(opkg list-upgradable | awk '{print $1}'); do
+          opkg upgrade $pkg
+        done
+      register: upgrade_result
+
+    - name: Check system uptime and wireless interfaces
+      ansible.builtin.raw: uptime; ubus call network.wireless status
+      register: wifi_status
+      changed_when: false
+
+    - name: Confirm AP health
+      ansible.builtin.debug:
+        msg: "AP {{ inventory_hostname }} update check completed. Load: {{ wifi_status.stdout_lines[0] | default('OK') }}"

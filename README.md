@@ -59,6 +59,7 @@ This stack provides centralized network monitoring, automated configuration vers
 | **Trivy Exporter** | `aquasec/trivy:latest` | `9091` | Automated container vulnerability scanner discovering running Docker containers & exporting Prometheus metrics |
 | **NetBox** | `netboxcommunity/netbox:latest` | `8080` | IPAM & DCIM network infrastructure source of truth, device modeling & prefix tracking |
 | **NetBox Worker** | `netboxcommunity/netbox:latest` | — | Redis Queue (RQ) background task worker for NetBox webhooks, scripts & reports |
+| **Ansible Semaphore** | `semaphoreui/semaphore:latest` | `3002` (3000) | Web-based automation control plane & task scheduler for Ansible patching playbooks |
 | **PostgreSQL** | `postgres:16-alpine` | — | Dedicated relational database backend for NetBox |
 | **NetBox Redis** | `redis:7-alpine` | — | Dedicated caching and message queue broker for NetBox |
 | **MariaDB** | `mariadb:10.11` | — | High-performance LTS database store for LibreNMS |
@@ -79,6 +80,7 @@ All HTTP/HTTPS requests to these URLs are intercepted by **Caddy** on ports 80/4
 | **`homelab.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | **Homepage Operations Dashboard** |
 | **`iye.internal`** | `A` | `<DOCKER_HOST_IP>` | Homepage Dashboard (Apex domain fallback) |
 | **`netbox.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | NetBox IPAM & DCIM Web UI & REST API |
+| **`semaphore.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Ansible Semaphore Automation Web UI |
 | **`librenms.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | LibreNMS Web UI |
 | **`grafana.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Grafana Telemetry Dashboards |
 | **`prometheus.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Prometheus Web UI & Scrape Engine |
@@ -304,6 +306,32 @@ If you prefer LibreNMS to dynamically provide device inventory to Oxidized inste
    - Config Versioning: **ON**
    - Reload nodes list each time a device is added: **ON**
 4. All your MikroTik switches and OpenWrt APs will automatically have their configurations backed up, diffed, and versioned in Git.
+
+---
+
+## Automated Infrastructure Patching (Ansible & Semaphore)
+
+The stack integrates **Ansible** and **Ansible Semaphore** for agentless, automated patching of both Linux servers and network devices:
+
+* **Semaphore Web Control Plane**: Accessible at [https://semaphore.iye.internal](https://semaphore.iye.internal) (Port `3002`). Manage inventory, credentials, schedules, and view color-coded task execution logs.
+* **NetBox Dynamic Inventory**: [`ansible/inventory/netbox.yml`](ansible/inventory/netbox.yml) automatically syncs Proxmox nodes, Docker hosts, MikroTik switches, and OpenWrt APs into Ansible groups directly from NetBox.
+* **Pre-Built Playbooks**:
+  1. [`ansible/playbooks/patch_all.yml`](ansible/playbooks/patch_all.yml): Master rolling orchestration across the entire homelab.
+  2. [`ansible/playbooks/patch_proxmox.yml`](ansible/playbooks/patch_proxmox.yml): Rolling 1-by-1 Proxmox VE updates (`apt dist-upgrade`), cluster quorum validation, kernel checks, and automated reboot.
+  3. [`ansible/playbooks/patch_docker.yml`](ansible/playbooks/patch_docker.yml): Docker host OS package updates, Docker Engine upgrades, and reboot verification.
+  4. [`ansible/playbooks/patch_openwrt.yml`](ansible/playbooks/patch_openwrt.yml): Rolling OpenWrt AP updates (`opkg update && opkg upgrade`) preserving WiFi coverage.
+  5. [`ansible/playbooks/patch_mikrotik.yml`](ansible/playbooks/patch_mikrotik.yml): MikroTik RouterOS and RouterBOOT firmware update checks and upgrades.
+
+### Running Playbooks via CLI or Semaphore
+```bash
+# Test connectivity to all inventory hosts:
+ansible all -i ansible/inventory/hosts.ini -m ping
+
+# Run full homelab patch:
+ansible-playbook -i ansible/inventory/hosts.ini ansible/playbooks/patch_all.yml
+
+# Or run interactively inside Semaphore Web UI: https://semaphore.iye.internal
+```
 
 ---
 

@@ -1,0 +1,15 @@
+---
+# ==============================================================================
+# Playbook: Master Homelab Maintenance & Patching Orchestration
+# ==============================================================================
+- name: 1. Patch Docker Host Servers
+  ansible.builtin.import_playbook: patch_docker.yml
+
+- name: 2. Patch Proxmox VE Cluster Nodes
+  ansible.builtin.import_playbook: patch_proxmox.yml
+
+- name: 3. Check & Update OpenWrt Access Points
+  ansible.builtin.import_playbook: patch_openwrt.yml
+
+- name: 4. Check MikroTik RouterOS Updates
+  ansible.builtin.import_playbook: patch_mikrotik.yml

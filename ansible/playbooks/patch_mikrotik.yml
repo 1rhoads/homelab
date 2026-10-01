@@ -1,0 +1,59 @@
+---
+# ==============================================================================
+# Playbook: MikroTik RouterOS Firmware & Package Upgrade
+# ==============================================================================
+- name: Check and Update MikroTik RouterOS
+  hosts: mikrotik
+  gather_facts: false
+  serial: 1
+
+  vars:
+    channel: "stable" # stable, long-term, testing
+    auto_install: false # Set to true to automatically download & reboot
+
+  tasks:
+    - name: Set update channel on MikroTik switch
+      community.routeros.command:
+        commands:
+          - /system package update set channel={{ channel }}
+      register: channel_set
+
+    - name: Check for available RouterOS updates
+      community.routeros.command:
+        commands:
+          - /system package update check-for-updates once
+          - :delay 3s
+          - /system package update print
+      register: update_status
+
+    - name: Display RouterOS update status
+      ansible.builtin.debug:
+        msg: "{{ update_status.stdout_lines }}"
+
+    - name: Perform RouterOS installation and reboot
+      when: auto_install | bool and "New version is available" in (update_status.stdout | join(' '))
+      block:
+        - name: Download and install RouterOS update
+          community.routeros.command:
+            commands:
+              - /system package update install
+
+        - name: Wait for MikroTik switch to reboot and rejoin network
+          ansible.builtin.wait_for:
+            host: "{{ ansible_host }}"
+            port: 22
+            delay: 30
+            timeout: 300
+          delegate_to: localhost
+
+        - name: Upgrade RouterBOOT firmware to match new RouterOS
+          community.routeros.command:
+            commands:
+              - /system routerboard upgrade
+              - :delay 1s
+              - /system routerboard print
+          register: routerboot_res
+
+        - name: Display RouterBOOT status
+          ansible.builtin.debug:
+            msg: "{{ routerboot_res.stdout_lines }}"

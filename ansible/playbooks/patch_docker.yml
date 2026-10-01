@@ -1,0 +1,47 @@
+---
+# ==============================================================================
+# Playbook: Docker Host OS Patching & Docker Engine Updates
+# ==============================================================================
+- name: Patch Docker Host OS & System Packages
+  hosts: docker_hosts
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Update APT cache
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 300
+      when: ansible_os_family == "Debian"
+
+    - name: Upgrade all system packages and Docker engine
+      ansible.builtin.apt:
+        upgrade: dist
+        autoremove: true
+        autoclean: true
+      register: host_upgrade
+      when: ansible_os_family == "Debian"
+
+    - name: Check if Docker host requires a system reboot
+      ansible.builtin.stat:
+        path: /var/run/reboot-required
+      register: host_reboot_required
+
+    - name: Reboot Docker host if kernel or critical packages were updated
+      when: host_reboot_required.stat.exists
+      ansible.builtin.reboot:
+        msg: "Ansible automated patching initiated reboot for Docker host {{ inventory_hostname }}"
+        connect_timeout: 15
+        reboot_timeout: 300
+        pre_reboot_delay: 5
+        post_reboot_delay: 15
+        test_command: docker ps
+
+    - name: Verify Docker daemon and containers are operational
+      ansible.builtin.command: docker ps --format "{{ '{{' }} .Names {{ '}}' }}: {{ '{{' }} .Status {{ '}}' }}"
+      register: running_containers
+      changed_when: false
+
+    - name: Report running containers
+      ansible.builtin.debug:
+        msg: "Docker host {{ inventory_hostname }} is healthy. Active containers: {{ running_containers.stdout_lines | length }}"
