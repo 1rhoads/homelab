@@ -25,6 +25,7 @@
           - :delay 3s
           - /system package update print
       register: update_status
+      changed_when: false
 
     - name: Display RouterOS update status
       ansible.builtin.debug:
