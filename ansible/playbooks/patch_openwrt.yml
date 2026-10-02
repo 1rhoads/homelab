@@ -11,13 +11,24 @@
     upgrade_packages: false # Set to true to automatically upgrade packages
 
   tasks:
-    - name: Update OpenWrt OPKG package lists
-      ansible.builtin.raw: opkg update
-      register: opkg_update
-      changed_when: "'Updated list of available packages' in opkg_update.stdout"
+    # OpenWrt 25.x replaced opkg with apk; support both
+    - name: Detect OpenWrt package manager
+      ansible.builtin.raw: command -v apk >/dev/null && echo apk || echo opkg
+      register: pkg_mgr_out
+      changed_when: false
+
+    - name: Set package manager commands
+      ansible.builtin.set_fact:
+        pkg_mgr: "{{ pkg_mgr_out.stdout | trim }}"
+        pkg_list_upgradable: "{{ 'apk list --upgradable' if (pkg_mgr_out.stdout | trim) == 'apk' else 'opkg list-upgradable' }}"
+
+    - name: Update OpenWrt package lists
+      ansible.builtin.raw: "{{ pkg_mgr }} update"
+      register: pkg_update
+      changed_when: false
 
     - name: List upgradable packages on AP
-      ansible.builtin.raw: opkg list-upgradable
+      ansible.builtin.raw: "{{ pkg_list_upgradable }}"
       register: upgradable_pkgs
       changed_when: false
 
@@ -26,11 +37,15 @@
         msg: "Upgradable packages on {{ inventory_hostname }}:\n{{ upgradable_pkgs.stdout }}"
 
     - name: Apply package upgrades if requested
-      when: upgrade_packages | bool and upgradable_pkgs.stdout != ""
+      when: upgrade_packages | bool and upgradable_pkgs.stdout | trim != ""
       ansible.builtin.raw: |
-        for pkg in $(opkg list-upgradable | awk '{print $1}'); do
-          opkg upgrade $pkg
-        done
+        if [ "{{ pkg_mgr }}" = apk ]; then
+          apk upgrade
+        else
+          for pkg in $(opkg list-upgradable | awk '{print $1}'); do
+            opkg upgrade $pkg
+          done
+        fi
       register: upgrade_result
 
     - name: Check system uptime and wireless interfaces
