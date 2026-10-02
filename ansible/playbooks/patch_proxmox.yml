@@ -14,9 +14,11 @@
       register: quorum_check
       changed_when: false
 
-    - name: Display current cluster quorum
-      ansible.builtin.debug:
-        msg: "Node {{ inventory_hostname }} is part of active cluster. Quorum verified."
+    - name: Assert cluster is quorate before patching
+      ansible.builtin.assert:
+        that: quorum_check.stdout is search('Quorate:\s+Yes')
+        fail_msg: "Cluster is not quorate on {{ inventory_hostname }}; refusing to patch."
+        success_msg: "Node {{ inventory_hostname }} is part of active cluster. Quorum verified."
 
     - name: Update APT package cache
       ansible.builtin.apt:
@@ -60,7 +62,7 @@
         - name: Verify cluster quorum has re-established
           ansible.builtin.command: pvecm status
           register: post_reboot_quorum
-          until: post_reboot_quorum.rc == 0 and "Quorate: Yes" in post_reboot_quorum.stdout or "Activity; Ok" in post_reboot_quorum.stdout or "Nodes: " in post_reboot_quorum.stdout
+          until: post_reboot_quorum.rc == 0 and post_reboot_quorum.stdout is search('Quorate:\s+Yes')
           retries: 15
           delay: 10
           changed_when: false

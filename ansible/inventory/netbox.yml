@@ -3,7 +3,7 @@
 # ==============================================================================
 plugin: netbox.netbox.nb_inventory
 api_endpoint: "https://netbox.iye.internal"
-token: "0123456789abcdef0123456789abcdef01234567"
+# token is read from the NETBOX_TOKEN environment variable
 validate_certs: false
 config_context: true
 

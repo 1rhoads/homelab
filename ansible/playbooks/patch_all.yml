@@ -2,14 +2,16 @@
 # ==============================================================================
 # Playbook: Master Homelab Maintenance & Patching Orchestration
 # ==============================================================================
-- name: 1. Patch Docker Host Servers
-  ansible.builtin.import_playbook: patch_docker.yml
-
-- name: 2. Patch Proxmox VE Cluster Nodes
+# The Docker host runs Semaphore itself, so it is patched last: a reboot there
+# terminates the running Semaphore task.
+- name: 1. Patch Proxmox VE Cluster Nodes
   ansible.builtin.import_playbook: patch_proxmox.yml
 
-- name: 3. Check & Update OpenWrt Access Points
+- name: 2. Check & Update OpenWrt Access Points
   ansible.builtin.import_playbook: patch_openwrt.yml
 
-- name: 4. Check MikroTik RouterOS Updates
+- name: 3. Check MikroTik RouterOS Updates
   ansible.builtin.import_playbook: patch_mikrotik.yml
+
+- name: 4. Patch Docker Host Servers
+  ansible.builtin.import_playbook: patch_docker.yml
