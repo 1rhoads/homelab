@@ -95,3 +95,15 @@
         description: Container & Filesystem Vulnerability Scanner
         server: my-docker
         container: trivy
+    - Semaphore:
+        icon: ansible
+        href: https://semaphore.${DOMAIN:-iye.internal}
+        description: Ansible Automation & Patching Control Plane
+        server: my-docker
+        container: semaphore
+    - HomeGlow:
+        icon: home-assistant
+        href: https://homeglow.${DOMAIN:-iye.internal}
+        description: Smart Home & Family Touch Dashboard
+        server: my-docker
+        container: homeglow-frontend

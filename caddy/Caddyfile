@@ -42,3 +42,21 @@ trivy.{$DOMAIN:homelab.local} {
 	tls internal
 	reverse_proxy trivy:4954
 }
+
+# NetBox IPAM & DCIM
+netbox.{$DOMAIN:homelab.local} {
+	tls internal
+	reverse_proxy netbox:8080
+}
+
+# Ansible Semaphore Automation Web UI
+semaphore.{$DOMAIN:homelab.local} {
+	tls internal
+	reverse_proxy semaphore:3000
+}
+
+# HomeGlow Smart Home & Family Dashboard
+homeglow.{$DOMAIN:homelab.local} {
+	tls internal
+	reverse_proxy homeglow-frontend:3000
+}

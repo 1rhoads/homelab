@@ -659,6 +659,12 @@ configs:
       	tls internal
       	reverse_proxy semaphore:3000
       }
+
+      # HomeGlow Smart Home & Family Dashboard
+      homeglow.{$$DOMAIN:homelab.local} {
+      	tls internal
+      	reverse_proxy homeglow-frontend:3000
+      }
   trivy_landing:
     content: |
       <!DOCTYPE html>
@@ -1140,6 +1146,12 @@ configs:
               description: Ansible Automation & Patching Control Plane
               server: my-docker
               container: semaphore
+          - HomeGlow:
+              icon: home-assistant
+              href: https://homeglow.${DOMAIN:-iye.internal}
+              description: Smart Home & Family Touch Dashboard
+              server: my-docker
+              container: homeglow-frontend
   homepage_widgets:
     content: |
       ---
