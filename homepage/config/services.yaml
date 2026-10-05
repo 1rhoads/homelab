@@ -27,6 +27,12 @@
         description: Time-Series Metrics & Alerting Engine
         server: my-docker
         container: prometheus
+    - NetBox:
+        icon: netbox
+        href: https://netbox.${DOMAIN:-iye.internal}
+        description: IPAM & Infrastructure Source of Truth
+        server: my-docker
+        container: netbox
 
 - Virtualization & Servers:
     - Proxmox PVE 1:

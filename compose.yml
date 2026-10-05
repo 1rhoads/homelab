@@ -1062,10 +1062,6 @@ configs:
               description: IPAM & Infrastructure Source of Truth
               server: my-docker
               container: netbox
-              widget:
-                type: netbox
-                url: http://netbox:8080
-                key: "${NETBOX_API_TOKEN:-0123456789abcdef0123456789abcdef01234567}" 
 
       - Virtualization & Servers:
           - Proxmox PVE 1:
