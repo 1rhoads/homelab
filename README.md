@@ -318,7 +318,7 @@ The stack integrates **Ansible** and **Ansible Semaphore** for agentless, automa
 * **Pre-Built Playbooks**:
   1. [`ansible/playbooks/patch_all.yml`](ansible/playbooks/patch_all.yml): Master rolling orchestration across the entire homelab.
   2. [`ansible/playbooks/patch_proxmox.yml`](ansible/playbooks/patch_proxmox.yml): Rolling 1-by-1 Proxmox VE updates (`apt dist-upgrade`), cluster quorum validation, kernel checks, and automated reboot.
-  3. [`ansible/playbooks/patch_docker.yml`](ansible/playbooks/patch_docker.yml): Docker host OS package updates, Docker Engine upgrades, and reboot verification.
+  3. [`ansible/playbooks/patch_docker.yml`](ansible/playbooks/patch_docker.yml): Docker host OS package updates, Docker Engine upgrades, automated container image updates/re-creations (Watchtower one-shot), and dangling image pruning.
   4. [`ansible/playbooks/patch_openwrt.yml`](ansible/playbooks/patch_openwrt.yml): Rolling OpenWrt AP updates (`opkg update && opkg upgrade`) preserving WiFi coverage.
   5. [`ansible/playbooks/patch_mikrotik.yml`](ansible/playbooks/patch_mikrotik.yml): MikroTik RouterOS and RouterBOOT firmware update checks and upgrades.
 

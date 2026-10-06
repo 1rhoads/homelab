@@ -428,6 +428,8 @@ services:
       - "SEMAPHORE_ACCESS_KEY_ENCRYPTION=${SEMAPHORE_ACCESS_KEY_ENCRYPTION:-a8f7c9e1b2d45678a9c0e2f4b6d81012}"
     volumes:
       - semaphore-data:/etc/semaphore
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"
 
   # ---------------------------------------------------------------------------
   # Node Exporter: Docker Host Hardware & OS Telemetry

@@ -1,23 +1,34 @@
 ---
 # ==============================================================================
-# Playbook: Docker Host OS Patching & Docker Engine Updates
+# Playbook: Docker Host OS Patching, Docker Engine & Container Updates
 # ==============================================================================
-- name: Patch Docker Host OS & System Packages
+- name: Patch Docker Host OS, Docker Engine & Containers
   hosts: docker_hosts
   become: true
   gather_facts: true
 
   vars:
+    # Upgrade Debian host OS packages (apt dist-upgrade)
+    patch_host_os: true
     # Off by default: this host runs Semaphore, and rebooting it kills the task
     # mid-run. Pass -e docker_auto_reboot=true when running from the CLI.
     docker_auto_reboot: false
+    # Automatically pull updated container images and recreate containers via Watchtower
+    patch_containers: true
+    # Containers to exclude from automated container patching (Semaphore runs this task)
+    excluded_containers: "semaphore"
+    # Reclaim disk space by pruning dangling images
+    prune_images: true
 
   tasks:
+    # -------------------------------------------------------------------------
+    # Host Operating System & Docker Daemon Updates
+    # -------------------------------------------------------------------------
     - name: Update APT cache
       ansible.builtin.apt:
         update_cache: true
         cache_valid_time: 300
-      when: ansible_os_family == "Debian"
+      when: ansible_os_family == "Debian" and patch_host_os | bool
 
     - name: Upgrade all system packages and Docker engine
       ansible.builtin.apt:
@@ -25,15 +36,16 @@
         autoremove: true
         autoclean: true
       register: host_upgrade
-      when: ansible_os_family == "Debian"
+      when: ansible_os_family == "Debian" and patch_host_os | bool
 
     - name: Check if Docker host requires a system reboot
       ansible.builtin.stat:
         path: /var/run/reboot-required
       register: host_reboot_required
+      when: patch_host_os | bool
 
     - name: Reboot Docker host if kernel or critical packages were updated
-      when: host_reboot_required.stat.exists and docker_auto_reboot | bool
+      when: patch_host_os | bool and host_reboot_required.stat.exists and docker_auto_reboot | bool
       ansible.builtin.reboot:
         msg: "Ansible automated patching initiated reboot for Docker host {{ inventory_hostname }}"
         connect_timeout: 15
@@ -43,10 +55,45 @@
         test_command: docker ps
 
     - name: Warn that a reboot is pending
-      when: host_reboot_required.stat.exists and not docker_auto_reboot | bool
+      when: patch_host_os | bool and host_reboot_required.stat.exists and not docker_auto_reboot | bool
       ansible.builtin.debug:
         msg: "Reboot required on {{ inventory_hostname }} but docker_auto_reboot is false; reboot manually."
 
+    # -------------------------------------------------------------------------
+    # Container Image Patching & Recreation
+    # -------------------------------------------------------------------------
+    - name: Pull updated container images and recreate outdated containers via Watchtower
+      when: patch_containers | bool
+      ansible.builtin.command:
+        argv:
+          - docker
+          - run
+          - --rm
+          - -v
+          - /var/run/docker.sock:/var/run/docker.sock
+          - -e
+          - "WATCHTOWER_DISABLE_CONTAINERS={{ excluded_containers }}"
+          - containrrr/watchtower:latest
+          - --run-once
+          - --cleanup
+      register: watchtower_output
+      changed_when: "'Found new image' in watchtower_output.stdout or 'Found new image' in watchtower_output.stderr or 'Stopping' in watchtower_output.stdout or 'Stopping' in watchtower_output.stderr"
+
+    - name: Display container patching summary
+      when: patch_containers | bool and (watchtower_output.stdout is defined or watchtower_output.stderr is defined)
+      ansible.builtin.debug:
+        msg: "{{ (watchtower_output.stdout | default('')) ~ (watchtower_output.stderr | default('')) }}"
+
+    - name: Prune remaining dangling images
+      when: prune_images | bool
+      ansible.builtin.command:
+        argv: [docker, image, prune, -f]
+      register: prune_output
+      changed_when: "'Total reclaimed space: 0B' not in prune_output.stdout"
+
+    # -------------------------------------------------------------------------
+    # Health Verification
+    # -------------------------------------------------------------------------
     - name: Verify Docker daemon and containers are operational
       ansible.builtin.command:
         argv: [docker, ps, --format, !unsafe "{{ .Names }}: {{ .Status }}"]
