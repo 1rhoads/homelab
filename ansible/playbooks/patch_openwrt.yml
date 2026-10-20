@@ -9,8 +9,37 @@
 
   vars:
     upgrade_packages: false # Set to true to automatically upgrade packages
+    reboot_after_upgrade: false # Set to true to reboot after package upgrade
 
   tasks:
+    # --------------------------------------------------------------------------
+    # 1. PRE-UPGRADE: Check Connected Client Devices
+    # --------------------------------------------------------------------------
+    - name: Query connected wireless clients before upgrade
+      ansible.builtin.raw: |
+        for iface in $(cat /etc/librenms/wlInterfaces.txt 2>/dev/null | cut -f1 -d',' || ubus list 'hostapd.*' 2>/dev/null | sed 's/hostapd\.//'); do
+          iwinfo "$iface" assoclist 2>/dev/null | grep -E '^[0-9A-Fa-f]{2}:' | awk -v i="$iface" '{print i " | " $1 " | signal: " $2 " " $3}'
+        done
+      register: clients_before_raw
+      changed_when: false
+
+    - name: Parse pre-upgrade client list
+      ansible.builtin.set_fact:
+        clients_before: "{{ clients_before_raw.stdout_lines | map('trim') | reject('equalto', '') | list }}"
+        client_count_before: "{{ (clients_before_raw.stdout_lines | map('trim') | reject('equalto', '') | list) | length }}"
+
+    - name: Display pre-upgrade connected clients
+      ansible.builtin.debug:
+        msg:
+          - "=================================================="
+          - " AP: {{ inventory_hostname }} PRE-UPGRADE STATUS"
+          - " Active Connected Clients: {{ client_count_before }}"
+          - "=================================================="
+          - "{{ clients_before if client_count_before | int > 0 else ['No active clients connected'] }}"
+
+    # --------------------------------------------------------------------------
+    # 2. UPGRADE: Check & Apply Updates
+    # --------------------------------------------------------------------------
     # OpenWrt 25.x replaced opkg with apk; support both
     - name: Detect OpenWrt package manager
       ansible.builtin.raw: command -v apk >/dev/null && echo apk || echo opkg
@@ -48,11 +77,54 @@
         fi
       register: upgrade_result
 
+    - name: Reboot AP if requested and packages updated
+      when: reboot_after_upgrade | bool and (upgrade_result.changed | default(false) or upgrade_result.stdout | trim != '')
+      block:
+        - name: Trigger reboot
+          ansible.builtin.raw: reboot
+          ignore_errors: true
+
+        - name: Wait for AP to resume SSH
+          ansible.builtin.wait_for:
+            host: "{{ ansible_host | default(inventory_hostname) }}"
+            port: 22
+            delay: 15
+            timeout: 180
+          delegate_to: localhost
+
+        - name: Allow wireless radios and roaming to stabilize
+          ansible.builtin.pause:
+            seconds: 20
+
+    # --------------------------------------------------------------------------
+    # 3. POST-UPGRADE: Check Health & Connected Client Devices
+    # --------------------------------------------------------------------------
     - name: Check system uptime and wireless interfaces
       ansible.builtin.raw: uptime; ubus call network.wireless status
       register: wifi_status
       changed_when: false
 
-    - name: Confirm AP health
+    - name: Query connected wireless clients after upgrade
+      ansible.builtin.raw: |
+        for iface in $(cat /etc/librenms/wlInterfaces.txt 2>/dev/null | cut -f1 -d',' || ubus list 'hostapd.*' 2>/dev/null | sed 's/hostapd\.//'); do
+          iwinfo "$iface" assoclist 2>/dev/null | grep -E '^[0-9A-Fa-f]{2}:' | awk -v i="$iface" '{print i " | " $1 " | signal: " $2 " " $3}'
+        done
+      register: clients_after_raw
+      changed_when: false
+
+    - name: Parse post-upgrade client list
+      ansible.builtin.set_fact:
+        clients_after: "{{ clients_after_raw.stdout_lines | map('trim') | reject('equalto', '') | list }}"
+        client_count_after: "{{ (clients_after_raw.stdout_lines | map('trim') | reject('equalto', '') | list) | length }}"
+
+    - name: Display post-upgrade comparison report
       ansible.builtin.debug:
-        msg: "AP {{ inventory_hostname }} update check completed. Load: {{ wifi_status.stdout_lines[0] | default('OK') }}"
+        msg:
+          - "=================================================="
+          - " AP {{ inventory_hostname }} CLIENT COMPARISON"
+          - "=================================================="
+          - "Uptime / Load           : {{ wifi_status.stdout_lines[0] | default('OK') }}"
+          - "Connected Clients BEFORE: {{ client_count_before }}"
+          - "Connected Clients AFTER : {{ client_count_after }}"
+          - "Active Clients Now:"
+          - "{{ clients_after if client_count_after | int > 0 else ['No clients currently connected (may have roamed to adjacent APs)'] }}"
