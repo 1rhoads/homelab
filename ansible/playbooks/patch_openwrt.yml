@@ -26,15 +26,17 @@
         done
       register: clients_before_raw
       changed_when: false
+      check_mode: false
 
     - name: Parse pre-upgrade client list
       ansible.builtin.set_fact:
-        clients_before: "{{ clients_before_raw.stdout_lines | map('trim') | reject('equalto', '') | list }}"
-        client_count_before: "{{ (clients_before_raw.stdout_lines | map('trim') | reject('equalto', '') | list) | length }}"
+        clients_before: "{{ clients_before_raw.get('stdout_lines', []) | map('trim') | reject('equalto', '') | list }}"
+        client_count_before: "{{ (clients_before_raw.get('stdout_lines', []) | map('trim') | reject('equalto', '') | list) | length }}"
 
     - name: Determine required post-upgrade client threshold
       ansible.builtin.set_fact:
         target_reconnect_clients: "{{ 0 if (skip_reconnect_check_if_empty | bool and client_count_before | int == 0) else (min_reconnected_clients | int) }}"
+        ap_was_rebooted: false
 
     - name: Display pre-upgrade connected clients
       ansible.builtin.debug:
@@ -43,6 +45,7 @@
           - " AP: {{ inventory_hostname }} PRE-UPGRADE STATUS"
           - " Active Connected Clients: {{ client_count_before }}"
           - " Required Reconnected Clients: {{ target_reconnect_clients }}"
+          - " Mode: {{ 'DRY-RUN (Check Mode)' if ansible_check_mode else 'LIVE EXECUTION' }}"
           - "=================================================="
           - "{{ clients_before if client_count_before | int > 0 else ['No active clients connected prior to upgrade'] }}"
 
@@ -54,28 +57,34 @@
       ansible.builtin.raw: command -v apk >/dev/null && echo apk || echo opkg
       register: pkg_mgr_out
       changed_when: false
+      check_mode: false
 
     - name: Set package manager commands
       ansible.builtin.set_fact:
-        pkg_mgr: "{{ pkg_mgr_out.stdout | trim }}"
-        pkg_list_upgradable: "{{ 'apk list --upgradable' if (pkg_mgr_out.stdout | trim) == 'apk' else 'opkg list-upgradable' }}"
+        pkg_mgr: "{{ pkg_mgr_out.stdout | default('apk') | trim }}"
+        pkg_list_upgradable: "{{ 'apk list --upgradable' if (pkg_mgr_out.stdout | default('apk') | trim) == 'apk' else 'opkg list-upgradable' }}"
 
     - name: Update OpenWrt package lists
       ansible.builtin.raw: "{{ pkg_mgr }} update"
       register: pkg_update
       changed_when: false
+      check_mode: false
 
     - name: List upgradable packages on AP
       ansible.builtin.raw: "{{ pkg_list_upgradable }}"
       register: upgradable_pkgs
       changed_when: false
+      check_mode: false
 
     - name: Display available updates for {{ inventory_hostname }}
       ansible.builtin.debug:
-        msg: "Upgradable packages on {{ inventory_hostname }}:\n{{ upgradable_pkgs.stdout }}"
+        msg: "Upgradable packages on {{ inventory_hostname }}:\n{{ upgradable_pkgs.stdout | default('None') }}"
 
     - name: Apply package upgrades if requested
-      when: upgrade_packages | bool and upgradable_pkgs.stdout | trim != ""
+      when:
+        - not ansible_check_mode
+        - upgrade_packages | bool
+        - (upgradable_pkgs.get('stdout', '')) | trim != ""
       ansible.builtin.raw: |
         if [ "{{ pkg_mgr }}" = apk ]; then
           apk upgrade
@@ -90,7 +99,11 @@
     # 3. REBOOT & POST-REBOOT RECOVERY
     # --------------------------------------------------------------------------
     - name: Reboot AP if requested and packages updated
-      when: reboot_after_upgrade | bool and (upgrade_result.changed | default(false) or upgrade_result.stdout | trim != '')
+      when:
+        - not ansible_check_mode
+        - reboot_after_upgrade | bool
+        - upgrade_result is defined
+        - (upgrade_result.get('changed', false) or (upgrade_result.get('stdout', '') | trim != ''))
       block:
         - name: Trigger reboot
           ansible.builtin.raw: reboot
@@ -108,10 +121,17 @@
           ansible.builtin.pause:
             seconds: 15
 
+        - name: Mark AP as rebooted
+          ansible.builtin.set_fact:
+            ap_was_rebooted: true
+
     # --------------------------------------------------------------------------
     # 4. POST-UPGRADE VERIFICATION: Ensure at least one client has reconnected
     # --------------------------------------------------------------------------
     - name: Wait and verify client reconnection threshold before proceeding to next AP
+      when:
+        - not ansible_check_mode
+        - ap_was_rebooted | default(false) | bool
       ansible.builtin.raw: |
         count=0
         for iface in $(cat /etc/librenms/wlInterfaces.txt 2>/dev/null | cut -f1 -d',' || ubus list 'hostapd.*' 2>/dev/null | sed 's/hostapd\.//'); do
@@ -120,7 +140,7 @@
         done
         echo "$count"
       register: poll_clients_raw
-      until: (poll_clients_raw.stdout | trim | int) >= (target_reconnect_clients | int)
+      until: (poll_clients_raw.stdout | default('0') | trim | int) >= (target_reconnect_clients | int)
       retries: "{{ (reconnect_timeout_seconds | int / reconnect_poll_interval | int) | int }}"
       delay: "{{ reconnect_poll_interval }}"
       changed_when: false
@@ -129,6 +149,7 @@
       ansible.builtin.raw: uptime; ubus call network.wireless status
       register: wifi_status
       changed_when: false
+      check_mode: false
 
     - name: Query connected wireless clients after upgrade
       ansible.builtin.raw: |
@@ -137,22 +158,23 @@
         done
       register: clients_after_raw
       changed_when: false
+      check_mode: false
 
     - name: Parse post-upgrade client list
       ansible.builtin.set_fact:
-        clients_after: "{{ clients_after_raw.stdout_lines | map('trim') | reject('equalto', '') | list }}"
-        client_count_after: "{{ (clients_after_raw.stdout_lines | map('trim') | reject('equalto', '') | list) | length }}"
+        clients_after: "{{ clients_after_raw.get('stdout_lines', []) | map('trim') | reject('equalto', '') | list }}"
+        client_count_after: "{{ (clients_after_raw.get('stdout_lines', []) | map('trim') | reject('equalto', '') | list) | length }}"
 
     - name: Display post-upgrade client verification summary
       ansible.builtin.debug:
         msg:
           - "=================================================="
-          - " AP {{ inventory_hostname }} UPGRADE & CLIENT VERIFICATION"
+          - " AP {{ inventory_hostname }} {{ 'DRY-RUN SUMMARY' if ansible_check_mode else 'UPGRADE & CLIENT VERIFICATION' }}"
           - "=================================================="
-          - "Uptime / Load              : {{ wifi_status.stdout_lines[0] | default('OK') }}"
+          - "Uptime / Load              : {{ (wifi_status.get('stdout_lines', ['OK']))[0] }}"
           - "Connected Clients BEFORE   : {{ client_count_before }}"
           - "Connected Clients AFTER    : {{ client_count_after }}"
-          - "Target Reconnection Met    : YES (>= {{ target_reconnect_clients }})"
+          - "Target Reconnection Met    : {{ 'N/A (Dry Run / No Reboot)' if (ansible_check_mode or not (ap_was_rebooted | default(false) | bool)) else 'YES (>= ' ~ target_reconnect_clients ~ ')' }}"
           - "Status: SUCCESS. Proceeding to next access point..."
           - "Active Clients Now:"
           - "{{ clients_after if client_count_after | int > 0 else ['No clients currently connected'] }}"
