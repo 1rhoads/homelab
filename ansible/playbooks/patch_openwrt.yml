@@ -1,15 +1,18 @@
 ---
 # ==============================================================================
-# Playbook: OpenWrt Access Point Rolling Package & Security Updates
+# Playbook: OpenWrt Attended Sysupgrade (Rolling 1-by-1 with Client Verification)
 # ==============================================================================
-- name: Patch OpenWrt Access Points (Rolling 1-by-1 with Client Verification)
+- name: OpenWrt Attended Sysupgrade (Rolling 1-by-1 with Client Verification)
   hosts: openwrt
   serial: 1 # Strictly upgrade and verify one access point at a time
   gather_facts: false
 
   vars:
-    upgrade_packages: false # Set to true to automatically upgrade packages
-    reboot_after_upgrade: false # Set to true to reboot after package upgrade
+    # Set to true to execute actual sysupgrade (defaults to false for safe audit / check)
+    perform_sysupgrade: false
+    # Backwards compatibility: if upgrade_packages was configured in Semaphore, honor it as well
+    upgrade_packages: false
+    # Client verification settings
     min_reconnected_clients: 1 # Minimum clients required to reconnect before next AP
     reconnect_timeout_seconds: 180 # Maximum seconds to wait for client reconnection
     reconnect_poll_interval: 10 # Seconds between retry checks
@@ -36,94 +39,81 @@
     - name: Determine required post-upgrade client threshold
       ansible.builtin.set_fact:
         target_reconnect_clients: "{{ 0 if (skip_reconnect_check_if_empty | bool and client_count_before | int == 0) else (min_reconnected_clients | int) }}"
-        ap_was_rebooted: false
+        ap_was_upgraded: false
 
-    - name: Display pre-upgrade connected clients
+    # --------------------------------------------------------------------------
+    # 2. CHECK ATTENDED SYSUPGRADE (ASU / OWUT)
+    # --------------------------------------------------------------------------
+    - name: Query Attended Sysupgrade status via owut
+      ansible.builtin.raw: |
+        OUT=$(owut check 2>&1)
+        V_FROM=$(echo "$OUT" | grep 'Version-from' | awk '{print $2}')
+        V_TO=$(echo "$OUT" | grep 'Version-to' | awk '{print $2}')
+        SAFE=$(echo "$OUT" | grep -ci 'safe to proceed' || true)
+        NO_CHANGE=$(echo "$OUT" | grep -ci 'upgrade not necessary' || true)
+        echo "CURRENT_VERSION=${V_FROM:-Unknown}"
+        echo "TARGET_VERSION=${V_TO:-Unknown}"
+        echo "SAFE_TO_UPGRADE=${SAFE:-0}"
+        echo "NO_CHANGE=${NO_CHANGE:-0}"
+      register: owut_check_raw
+      changed_when: false
+      check_mode: false
+
+    - name: Parse Attended Sysupgrade versions
+      ansible.builtin.set_fact:
+        current_version: "{{ (owut_check_raw.get('stdout', '') | regex_findall('CURRENT_VERSION=(.*)')) | first | default('Unknown') | trim }}"
+        target_version: "{{ (owut_check_raw.get('stdout', '') | regex_findall('TARGET_VERSION=(.*)')) | first | default('Unknown') | trim }}"
+        safe_to_upgrade: "{{ ((owut_check_raw.get('stdout', '') | regex_findall('SAFE_TO_UPGRADE=(.*)')) | first | default('0') | trim | int) > 0 }}"
+        no_change_needed: "{{ ((owut_check_raw.get('stdout', '') | regex_findall('NO_CHANGE=(.*)')) | first | default('0') | trim | int) > 0 }}"
+
+    - name: Evaluate upgrade availability
+      ansible.builtin.set_fact:
+        upgrade_available: "{{ safe_to_upgrade | bool or (current_version != target_version and not no_change_needed | bool) }}"
+        run_live_upgrade: "{{ (perform_sysupgrade | bool or upgrade_packages | bool) and not ansible_check_mode }}"
+
+    - name: Display pre-upgrade status
       ansible.builtin.debug:
         msg:
           - "=================================================="
-          - " AP: {{ inventory_hostname }} PRE-UPGRADE STATUS"
-          - " Active Connected Clients: {{ client_count_before }}"
-          - " Required Reconnected Clients: {{ target_reconnect_clients }}"
-          - " Mode: {{ 'DRY-RUN (Check Mode)' if ansible_check_mode else 'LIVE EXECUTION' }}"
+          - " AP: {{ inventory_hostname }} ATTENDED SYSUPGRADE STATUS"
           - "=================================================="
-          - "{{ clients_before if client_count_before | int > 0 else ['No active clients connected prior to upgrade'] }}"
+          - " Current Installed Version : {{ current_version }}"
+          - " Latest Available Version  : {{ target_version }}"
+          - " Upgrade Status            : {{ 'UPGRADE AVAILABLE (' ~ current_version ~ ' -> ' ~ target_version ~ ')' if upgrade_available else 'ALREADY UP TO DATE' }}"
+          - " Active Connected Clients  : {{ client_count_before }}"
+          - " Required Reconnect Target : {{ target_reconnect_clients }}"
+          - " Execution Mode            : {{ 'DRY-RUN (Check Mode)' if ansible_check_mode else ('LIVE ATTENDED SYSUPGRADE' if run_live_upgrade else 'AUDIT ONLY (perform_sysupgrade=false)') }}"
+          - "=================================================="
 
     # --------------------------------------------------------------------------
-    # 2. UPGRADE: Check & Apply Updates
+    # 3. EXECUTE ATTENDED SYSUPGRADE
     # --------------------------------------------------------------------------
-    # OpenWrt 25.x replaced opkg with apk; support both
-    - name: Detect OpenWrt package manager
-      ansible.builtin.raw: command -v apk >/dev/null && echo apk || echo opkg
-      register: pkg_mgr_out
-      changed_when: false
-      check_mode: false
-
-    - name: Set package manager commands
-      ansible.builtin.set_fact:
-        pkg_mgr: "{{ pkg_mgr_out.stdout | default('apk') | trim }}"
-        pkg_list_upgradable: "{{ 'apk list --upgradable' if (pkg_mgr_out.stdout | default('apk') | trim) == 'apk' else 'opkg list-upgradable' }}"
-
-    - name: Update OpenWrt package lists
-      ansible.builtin.raw: "{{ pkg_mgr }} update"
-      register: pkg_update
-      changed_when: false
-      check_mode: false
-
-    - name: List upgradable packages on AP
-      ansible.builtin.raw: "{{ pkg_list_upgradable }}"
-      register: upgradable_pkgs
-      changed_when: false
-      check_mode: false
-
-    - name: Display available updates for {{ inventory_hostname }}
-      ansible.builtin.debug:
-        msg: "Upgradable packages on {{ inventory_hostname }}:\n{{ upgradable_pkgs.stdout | default('None') }}"
-
-    - name: Apply package upgrades if requested
+    - name: Perform Attended Sysupgrade and reboot
       when:
-        - not ansible_check_mode
-        - upgrade_packages | bool
-        - (upgradable_pkgs.get('stdout', '')) | trim != ""
-      ansible.builtin.raw: |
-        if [ "{{ pkg_mgr }}" = apk ]; then
-          apk upgrade
-        else
-          for pkg in $(opkg list-upgradable | awk '{print $1}'); do
-            opkg upgrade $pkg
-          done
-        fi
-      register: upgrade_result
-
-    # --------------------------------------------------------------------------
-    # 3. REBOOT & POST-REBOOT RECOVERY
-    # --------------------------------------------------------------------------
-    - name: Reboot AP if requested and packages updated
-      when:
-        - not ansible_check_mode
-        - reboot_after_upgrade | bool
-        - upgrade_result is defined
-        - (upgrade_result.get('changed', false) or (upgrade_result.get('stdout', '') | trim != ''))
+        - run_live_upgrade | bool
+        - upgrade_available | bool
       block:
-        - name: Trigger reboot
-          ansible.builtin.raw: reboot
-          ignore_errors: true
+        - name: Trigger owut upgrade (build, download, verify & flash)
+          ansible.builtin.raw: owut upgrade
+          register: owut_upgrade_result
+          failed_when: false
 
-        - name: Wait for AP to resume SSH
+        - name: Mark AP as upgraded
+          ansible.builtin.set_fact:
+            ap_was_upgraded: true
+
+        - name: Wait for AP to reboot and resume SSH
           ansible.builtin.wait_for:
             host: "{{ ansible_host | default(inventory_hostname) }}"
             port: 22
-            delay: 15
-            timeout: 180
+            state: started
+            delay: 45
+            timeout: 300
           delegate_to: localhost
 
         - name: Allow wireless radios to initialize
           ansible.builtin.pause:
-            seconds: 15
-
-        - name: Mark AP as rebooted
-          ansible.builtin.set_fact:
-            ap_was_rebooted: true
+            seconds: 20
 
     # --------------------------------------------------------------------------
     # 4. POST-UPGRADE VERIFICATION: Ensure at least one client has reconnected
@@ -131,7 +121,7 @@
     - name: Wait and verify client reconnection threshold before proceeding to next AP
       when:
         - not ansible_check_mode
-        - ap_was_rebooted | default(false) | bool
+        - ap_was_upgraded | default(false) | bool
       ansible.builtin.raw: |
         count=0
         for iface in $(cat /etc/librenms/wlInterfaces.txt 2>/dev/null | cut -f1 -d',' || ubus list 'hostapd.*' 2>/dev/null | sed 's/hostapd\.//'); do
@@ -146,8 +136,8 @@
       changed_when: false
 
     - name: Check system uptime and wireless interfaces
-      ansible.builtin.raw: uptime; ubus call network.wireless status
-      register: wifi_status
+      ansible.builtin.raw: uptime; grep 'DISTRIB_DESCRIPTION' /etc/openwrt_release | cut -d= -f2 | tr -d "'"
+      register: system_status
       changed_when: false
       check_mode: false
 
@@ -165,16 +155,18 @@
         clients_after: "{{ clients_after_raw.get('stdout_lines', []) | map('trim') | reject('equalto', '') | list }}"
         client_count_after: "{{ (clients_after_raw.get('stdout_lines', []) | map('trim') | reject('equalto', '') | list) | length }}"
 
-    - name: Display post-upgrade client verification summary
+    - name: Display post-upgrade summary
       ansible.builtin.debug:
         msg:
           - "=================================================="
-          - " AP {{ inventory_hostname }} {{ 'DRY-RUN SUMMARY' if ansible_check_mode else 'UPGRADE & CLIENT VERIFICATION' }}"
+          - " AP {{ inventory_hostname }} SYSUPGRADE SUMMARY"
           - "=================================================="
-          - "Uptime / Load              : {{ (wifi_status.get('stdout_lines', ['OK']))[0] }}"
-          - "Connected Clients BEFORE   : {{ client_count_before }}"
-          - "Connected Clients AFTER    : {{ client_count_after }}"
-          - "Target Reconnection Met    : {{ 'N/A (Dry Run / No Reboot)' if (ansible_check_mode or not (ap_was_rebooted | default(false) | bool)) else 'YES (>= ' ~ target_reconnect_clients ~ ')' }}"
-          - "Status: SUCCESS. Proceeding to next access point..."
-          - "Active Clients Now:"
+          - " Firmware Installed        : {{ (system_status.get('stdout_lines', ['OK', current_version]))[1] | default(current_version) }}"
+          - " System Uptime             : {{ (system_status.get('stdout_lines', ['OK']))[0] }}"
+          - " Connected Clients BEFORE  : {{ client_count_before }}"
+          - " Connected Clients AFTER   : {{ client_count_after }}"
+          - " Target Reconnection Met   : {{ 'YES (>= ' ~ target_reconnect_clients ~ ')' if ap_was_upgraded else 'N/A' }}"
+          - " Result                    : {{ 'UPGRADED SUCCESSFULLY' if ap_was_upgraded else ('ALREADY UP-TO-DATE' if not upgrade_available else 'AUDIT/DRY-RUN COMPLETE') }}"
+          - " Status                    : SUCCESS. Proceeding to next access point..."
+          - " Active Clients Now:"
           - "{{ clients_after if client_count_after | int > 0 else ['No clients currently connected'] }}"
