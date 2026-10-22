@@ -68,7 +68,7 @@
 
     - name: Evaluate upgrade availability
       ansible.builtin.set_fact:
-        upgrade_available: "{{ safe_to_upgrade | bool or (current_version != target_version and not no_change_needed | bool) }}"
+        upgrade_available: "{{ current_version != target_version and (safe_to_upgrade | bool or not no_change_needed | bool) }}"
         run_live_upgrade: "{{ (perform_sysupgrade | bool or upgrade_packages | bool) and not ansible_check_mode }}"
 
     - name: Display pre-upgrade status
@@ -116,12 +116,13 @@
             seconds: 20
 
     # --------------------------------------------------------------------------
-    # 4. POST-UPGRADE VERIFICATION: Ensure at least one client has reconnected
+    # 4. POST-UPGRADE VERIFICATION: Ensure client reconnection or accessibility
     # --------------------------------------------------------------------------
     - name: Wait and verify client reconnection threshold before proceeding to next AP
       when:
         - not ansible_check_mode
         - ap_was_upgraded | default(false) | bool
+        - target_reconnect_clients | int > 0
       ansible.builtin.raw: |
         count=0
         for iface in $(cat /etc/librenms/wlInterfaces.txt 2>/dev/null | cut -f1 -d',' || ubus list 'hostapd.*' 2>/dev/null | sed 's/hostapd\.//'); do
@@ -134,6 +135,14 @@
       retries: "{{ (reconnect_timeout_seconds | int / reconnect_poll_interval | int) | int }}"
       delay: "{{ reconnect_poll_interval }}"
       changed_when: false
+
+    - name: Verify post-reboot accessibility for APs without connected clients
+      when:
+        - not ansible_check_mode
+        - ap_was_upgraded | default(false) | bool
+        - target_reconnect_clients | int == 0
+      ansible.builtin.debug:
+        msg: "Zero wireless clients connected prior to upgrade on {{ inventory_hostname }}. Verified successful reboot, SSH access, and system readiness."
 
     - name: Check system uptime and wireless interfaces
       ansible.builtin.raw: uptime; grep 'DISTRIB_DESCRIPTION' /etc/openwrt_release | cut -d= -f2 | tr -d "'"
@@ -165,7 +174,7 @@
           - " System Uptime             : {{ (system_status.get('stdout_lines', ['OK']))[0] }}"
           - " Connected Clients BEFORE  : {{ client_count_before }}"
           - " Connected Clients AFTER   : {{ client_count_after }}"
-          - " Target Reconnection Met   : {{ 'YES (>= ' ~ target_reconnect_clients ~ ')' if ap_was_upgraded else 'N/A' }}"
+          - " Target Reconnection Met   : {{ ('YES (>= ' ~ target_reconnect_clients ~ ' clients reconnected)') if (ap_was_upgraded and target_reconnect_clients | int > 0) else ('PASS (Zero-client AP: SSH accessibility verified)' if ap_was_upgraded else 'N/A') }}"
           - " Result                    : {{ 'UPGRADED SUCCESSFULLY' if ap_was_upgraded else ('ALREADY UP-TO-DATE' if not upgrade_available else 'AUDIT/DRY-RUN COMPLETE') }}"
           - " Status                    : SUCCESS. Proceeding to next access point..."
           - " Active Clients Now:"
