@@ -113,3 +113,9 @@
         description: Smart Home & Family Touch Dashboard
         server: my-docker
         container: homeglow-frontend
+    - Authentik:
+        icon: authentik
+        href: https://authentik.${DOMAIN:-iye.internal}
+        description: Central Identity Provider & Single Sign-On
+        server: my-docker
+        container: authentik_server

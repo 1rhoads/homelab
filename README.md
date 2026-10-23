@@ -59,6 +59,8 @@ This stack provides centralized network monitoring, automated configuration vers
 | **Trivy Exporter** | `aquasec/trivy:latest` | `9091` | Automated container vulnerability scanner discovering running Docker containers & exporting Prometheus metrics |
 | **NetBox** | `netboxcommunity/netbox:latest` | `8080` | IPAM & DCIM network infrastructure source of truth, device modeling & prefix tracking |
 | **NetBox Worker** | `netboxcommunity/netbox:latest` | — | Redis Queue (RQ) background task worker for NetBox webhooks, scripts & reports |
+| **Authentik** | `ghcr.io/goauthentik/server:2024.12` | `9000`, `9443` | Central Identity Provider, Single Sign-On (SSO), Forward Auth, and MFA/Passkeys |
+| **Authentik Worker** | `ghcr.io/goauthentik/server:2024.12` | — | Background task worker for Authentik discovery, outposts, and tasks |
 | **Ansible Semaphore** | `semaphoreui/semaphore:latest` | `3002` (3000) | Web-based automation control plane & task scheduler for Ansible patching playbooks |
 | **PostgreSQL** | `postgres:16-alpine` | — | Dedicated relational database backend for NetBox |
 | **NetBox Redis** | `redis:7-alpine` | — | Dedicated caching and message queue broker for NetBox |
@@ -289,6 +291,22 @@ The stack includes automated container security scanning powered by **Aqua Secur
    # Check exporter health and scan status:
    curl http://<DOCKER_HOST_IP>:9091/healthz
    ```
+
+---
+
+## Central Identity Provider & Single Sign-On (Authentik)
+
+The stack integrates **Authentik** for centralized authentication, Single Sign-On (SSO), Forward Auth, and multi-factor authentication (MFA / WebAuthn / Passkeys):
+
+* **Access**: [https://authentik.iye.internal](https://authentik.iye.internal)
+* **Initial Setup**:
+  1. Browse to `https://authentik.iye.internal/if/flow/initial-setup/`
+  2. Set the administrator password for the built-in `akadmin` user.
+  3. Enroll MFA (Security Key / Passkey or TOTP).
+* **Protected Services & Integration**:
+  - **OpenWrt APs**: Each access point (e.g. `https://ap-fort.iye.internal`, `https://ap-garage.iye.internal`) is routed through Caddy with internal TLS and can be gated with Authentik Forward Auth.
+  - **OIDC Integrations**: NetBox, Grafana, Semaphore, Gitea, and Proxmox VE can all authenticate against Authentik via OpenID Connect (OIDC).
+  - **Wi-Fi RADIUS / 802.1X**: Authentik's LDAP outpost can be connected to FreeRADIUS to enable per-user WPA3-Enterprise Wi-Fi authentication and dynamic VLAN assignment on your OpenWrt APs.
 
 ---
 

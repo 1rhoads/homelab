@@ -571,6 +571,112 @@ services:
       - netbox-reports-data:/opt/netbox/netbox/reports
       - netbox-scripts-data:/opt/netbox/netbox/scripts
 
+  # ---------------------------------------------------------------------------
+  # Authentik: Identity Provider & Single Sign-On (PostgreSQL Database)
+  # ---------------------------------------------------------------------------
+  authentik_db:
+    image: postgres:16-alpine
+    container_name: authentik_db
+    restart: always
+    environment:
+      - "TZ=${TZ:-UTC}"
+      - "POSTGRES_DB=${AUTHENTIK_DB_NAME:-authentik}"
+      - "POSTGRES_USER=${AUTHENTIK_DB_USER:-authentik}"
+      - "POSTGRES_PASSWORD=${AUTHENTIK_DB_PASSWORD:-v01c3l@bNOW}"
+    volumes:
+      - authentik-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${AUTHENTIK_DB_USER:-authentik} -d ${AUTHENTIK_DB_NAME:-authentik}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ---------------------------------------------------------------------------
+  # Authentik: In-Memory Cache and Task Broker (Redis)
+  # ---------------------------------------------------------------------------
+  authentik_redis:
+    image: redis:7-alpine
+    pull_policy: always
+    container_name: authentik_redis
+    restart: always
+    command:
+      - "redis-server"
+      - "--appendonly"
+      - "yes"
+    volumes:
+      - authentik-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------------------------------------------------------------------------
+  # Authentik: Core Identity Provider & SSO Web Application (Server)
+  # ---------------------------------------------------------------------------
+  authentik_server:
+    image: ghcr.io/goauthentik/server:2024.12
+    pull_policy: always
+    container_name: authentik_server
+    restart: always
+    command:
+      - "server"
+    environment:
+      - "TZ=${TZ:-UTC}"
+      - "AUTHENTIK_REDIS__HOST=authentik_redis"
+      - "AUTHENTIK_POSTGRESQL__HOST=authentik_db"
+      - "AUTHENTIK_POSTGRESQL__USER=${AUTHENTIK_DB_USER:-authentik}"
+      - "AUTHENTIK_POSTGRESQL__NAME=${AUTHENTIK_DB_NAME:-authentik}"
+      - "AUTHENTIK_POSTGRESQL__PASSWORD=${AUTHENTIK_DB_PASSWORD:-v01c3l@bNOW}"
+      - "AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY:-b58e72c8413a912e541097fae87c012894f29104}"
+      - "AUTHENTIK_ERROR_REPORTING__ENABLED=false"
+      - "AUTHENTIK_DISABLE_UPDATE_CHECK=true"
+      - "AUTHENTIK_DISABLE_STARTUP_ANALYTICS=true"
+    volumes:
+      - authentik-media-data:/media
+      - authentik-custom-templates:/custom-templates
+    ports:
+      - "9000:9000"
+      - "9443:9443"
+    depends_on:
+      authentik_db:
+        condition: service_healthy
+      authentik_redis:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------------------
+  # Authentik: Asynchronous Task Worker & Background Jobs
+  # ---------------------------------------------------------------------------
+  authentik_worker:
+    image: ghcr.io/goauthentik/server:2024.12
+    pull_policy: always
+    container_name: authentik_worker
+    restart: always
+    command:
+      - "worker"
+    environment:
+      - "TZ=${TZ:-UTC}"
+      - "AUTHENTIK_REDIS__HOST=authentik_redis"
+      - "AUTHENTIK_POSTGRESQL__HOST=authentik_db"
+      - "AUTHENTIK_POSTGRESQL__USER=${AUTHENTIK_DB_USER:-authentik}"
+      - "AUTHENTIK_POSTGRESQL__NAME=${AUTHENTIK_DB_NAME:-authentik}"
+      - "AUTHENTIK_POSTGRESQL__PASSWORD=${AUTHENTIK_DB_PASSWORD:-v01c3l@bNOW}"
+      - "AUTHENTIK_SECRET_KEY=${AUTHENTIK_SECRET_KEY:-b58e72c8413a912e541097fae87c012894f29104}"
+      - "AUTHENTIK_ERROR_REPORTING__ENABLED=false"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - authentik-media-data:/media
+      - authentik-certs-data:/certs
+      - authentik-custom-templates:/custom-templates
+    depends_on:
+      authentik_server:
+        condition: service_started
+      authentik_db:
+        condition: service_healthy
+      authentik_redis:
+        condition: service_healthy
+
 # Persistent Volumes
 # -----------------------------------------------------------------------------
 volumes:
@@ -588,6 +694,11 @@ volumes:
   netbox-reports-data:
   netbox-scripts-data:
   semaphore-data:
+  authentik-db-data:
+  authentik-redis-data:
+  authentik-media-data:
+  authentik-custom-templates:
+  authentik-certs-data:
 
 # -----------------------------------------------------------------------------
 # Embedded Configurations (Self-Contained for Portainer Web Editor & Git)
@@ -666,6 +777,43 @@ configs:
       homeglow.{$$DOMAIN:homelab.local} {
       	tls internal
       	reverse_proxy homeglow-frontend:3000
+      }
+
+      # Authentik Identity Provider & Single Sign-On
+      authentik.{$$DOMAIN:homelab.local} {
+      	tls internal
+      	reverse_proxy authentik_server:9000 {
+      		header_up Host {host}
+      		header_up X-Real-IP {remote_host}
+      		header_up X-Forwarded-For {remote_host}
+      		header_up X-Forwarded-Proto https
+      	}
+      }
+
+      # OpenWrt Access Point Web Interfaces (LuCI)
+      ap-garage.{$$DOMAIN:homelab.local} {
+      	tls internal
+      	reverse_proxy 192.168.0.41:80
+      }
+      ap-callie.{$$DOMAIN:homelab.local} {
+      	tls internal
+      	reverse_proxy 192.168.0.42:80
+      }
+      ap-outside.{$$DOMAIN:homelab.local} {
+      	tls internal
+      	reverse_proxy 192.168.0.44:80
+      }
+      ap-printer.{$$DOMAIN:homelab.local} {
+      	tls internal
+      	reverse_proxy 192.168.0.45:80
+      }
+      ap-fort.{$$DOMAIN:homelab.local} {
+      	tls internal
+      	reverse_proxy 192.168.0.46:80
+      }
+      ap-robert.{$$DOMAIN:homelab.local} {
+      	tls internal
+      	reverse_proxy 192.168.0.47:80
       }
   trivy_landing:
     content: |
@@ -1150,6 +1298,12 @@ configs:
               description: Smart Home & Family Touch Dashboard
               server: my-docker
               container: homeglow-frontend
+          - Authentik:
+              icon: authentik
+              href: https://authentik.${DOMAIN:-iye.internal}
+              description: Central Identity Provider & Single Sign-On
+              server: my-docker
+              container: authentik_server
   homepage_widgets:
     content: |
       ---

@@ -60,3 +60,45 @@ homeglow.{$DOMAIN:homelab.local} {
 	tls internal
 	reverse_proxy homeglow-frontend:3000
 }
+
+# Authentik Identity Provider & Single Sign-On
+authentik.{$DOMAIN:homelab.local} {
+	tls internal
+	reverse_proxy authentik_server:9000 {
+		header_up Host {host}
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+		header_up X-Forwarded-Proto https
+	}
+}
+
+# OpenWrt Access Point Web Interfaces (LuCI)
+ap-garage.{$DOMAIN:homelab.local} {
+	tls internal
+	reverse_proxy 192.168.0.41:80
+}
+
+ap-callie.{$DOMAIN:homelab.local} {
+	tls internal
+	reverse_proxy 192.168.0.42:80
+}
+
+ap-outside.{$DOMAIN:homelab.local} {
+	tls internal
+	reverse_proxy 192.168.0.44:80
+}
+
+ap-printer.{$DOMAIN:homelab.local} {
+	tls internal
+	reverse_proxy 192.168.0.45:80
+}
+
+ap-fort.{$DOMAIN:homelab.local} {
+	tls internal
+	reverse_proxy 192.168.0.46:80
+}
+
+ap-robert.{$DOMAIN:homelab.local} {
+	tls internal
+	reverse_proxy 192.168.0.47:80
+}
