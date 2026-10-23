@@ -355,6 +355,8 @@ services:
         target: /etc/grafana/provisioning/dashboards/docker-host.json
       - source: grafana_dash_security
         target: /etc/grafana/provisioning/dashboards/trivy-security.json
+      - source: grafana_dash_mikrotik
+        target: /etc/grafana/provisioning/dashboards/mikrotik-switch.json
     volumes:
       - grafana-data:/var/lib/grafana
     depends_on:
@@ -405,6 +407,26 @@ services:
       - trivy-cache:/root/.cache/
     depends_on:
       - trivy
+
+  # ---------------------------------------------------------------------------
+  # MikroTik Exporter: Switch Telemetry & Port Performance Exporter
+  # ---------------------------------------------------------------------------
+  mikrotik-exporter:
+    image: python:3-alpine
+    pull_policy: always
+    container_name: mikrotik_exporter
+    restart: always
+    command: ["python3", "/app/exporter.py"]
+    ports:
+      - "9436:9436"
+    environment:
+      - "MIKROTIK_HOST=${MIKROTIK_CORE_HOST:-switch-1.iye.internal}"
+      - "MIKROTIK_USER=${MIKROTIK_USER:-admin}"
+      - "MIKROTIK_PASSWORD=${MIKROTIK_PASSWORD:-v01c3l@bNOW}"
+      - "LISTEN_PORT=9436"
+    configs:
+      - source: mikrotik_exporter_script
+        target: /app/exporter.py
 
   # ---------------------------------------------------------------------------
   # Ansible Semaphore: Web UI & Automation Control Plane
@@ -1069,14 +1091,13 @@ configs:
 
         # MikroTik Switches & Routers (RouterOS / SwOS)
         - job_name: "mikrotik"
-          scrape_interval: 30s
+          scrape_interval: 15s
           static_configs:
-            - targets:
-                # - "${MIKROTIK_CORE_HOST:-switch-1.iye.internal}"
-                # - "${MIKROTIK_SW2_HOST:-switch-2.iye.internal}"
+            - targets: ["mikrotik_exporter:9436"]
               labels:
                 role: "switch"
                 vendor: "mikrotik"
+                instance: "${MIKROTIK_CORE_HOST:-switch-1.iye.internal}"
 
         # NetBox IPAM & DCIM
         - job_name: "netbox"
@@ -1235,6 +1256,10 @@ configs:
               icon: mikrotik
               href: http://${MIKROTIK_CORE_HOST:-switch-1.iye.internal}
               description: Core Switch 1 (RouterOS / WebFig)
+          - Switch 1 Metrics:
+              icon: grafana
+              href: https://grafana.${DOMAIN:-iye.internal}/d/mikrotik-switch-1
+              description: CRS310 Port Telemetry & Thermals (Grafana)
           - MikroTik Switch 2:
               icon: mikrotik
               href: http://${MIKROTIK_SW2_HOST:-switch-2.iye.internal}
@@ -4827,5 +4852,954 @@ configs:
         "timezone": "",
         "title": "Homelab Security & Vulnerabilities (Trivy)",
         "uid": "trivy-security",
+        "version": 1
+      }
+
+  mikrotik_exporter_script:
+    content: |
+      #!/usr/bin/env python3
+      """
+      MikroTik RouterOS Prometheus Exporter
+      Scrapes RouterOS v7 REST API and exports Prometheus metrics for switches/routers.
+      """
+      
+      import http.server
+      import json
+      import os
+      import sys
+      import time
+      import urllib.request
+      import urllib.error
+      import base64
+      
+      HOST = os.getenv("MIKROTIK_HOST", "switch-1.iye.internal")
+      USER = os.getenv("MIKROTIK_USER", "admin")
+      PASSWORD = os.getenv("MIKROTIK_PASSWORD", "v01c3l@bNOW")
+      PORT = int(os.getenv("LISTEN_PORT", "9436"))
+      
+      CACHE_DURATION = 5.0
+      _last_scrape = 0
+      _cached_metrics = ""
+      
+      def parse_uptime(s):
+          total = 0
+          units = {"w": 604800, "d": 86400, "h": 3600, "m": 60, "s": 1}
+          num = ""
+          for c in str(s):
+              if c.isdigit():
+                  num += c
+              elif c in units and num:
+                  total += int(num) * units[c]
+                  num = ""
+          return total
+      
+      def fetch_rest(endpoint):
+          auth = base64.b64encode(f"{USER}:{PASSWORD}".encode()).decode("ascii")
+          url = f"http://{HOST}/rest/{endpoint}"
+          req = urllib.request.Request(url, headers={"Authorization": f"Basic {auth}"})
+          with urllib.request.urlopen(req, timeout=5) as resp:
+              return json.loads(resp.read().decode("utf-8"))
+      
+      def generate_metrics():
+          lines = []
+          lines.append("# HELP mikrotik_up Reachability of MikroTik device")
+          lines.append("# TYPE mikrotik_up gauge")
+          
+          try:
+              res = fetch_rest("system/resource")
+              health = fetch_rest("system/health")
+              interfaces = fetch_rest("interface")
+          except Exception as e:
+              lines.append(f'mikrotik_up{{instance="{HOST}"}} 0')
+              lines.append(f'# Scrape error: {e}')
+              return "\n".join(lines) + "\n"
+      
+          lines.append(f'mikrotik_up{{instance="{HOST}"}} 1')
+          
+          # System Info
+          board = res.get("board-name", "unknown")
+          version = res.get("version", "unknown")
+          arch = res.get("architecture-name", "unknown")
+          cpu = res.get("cpu", "unknown")
+          lines.append('# HELP mikrotik_system_info System hardware and firmware information')
+          lines.append('# TYPE mikrotik_system_info gauge')
+          lines.append(f'mikrotik_system_info{{instance="{HOST}",board_name="{board}",version="{version}",arch="{arch}",cpu="{cpu}"}} 1')
+      
+          # CPU & Frequency
+          cpu_load = float(res.get("cpu-load", 0))
+          cpu_freq = float(res.get("cpu-frequency", 0))
+          lines.append('# HELP mikrotik_system_cpu_load_percent CPU utilization in percent')
+          lines.append('# TYPE mikrotik_system_cpu_load_percent gauge')
+          lines.append(f'mikrotik_system_cpu_load_percent{{instance="{HOST}"}} {cpu_load}')
+          lines.append('# HELP mikrotik_system_cpu_frequency_mhz CPU clock frequency in MHz')
+          lines.append('# TYPE mikrotik_system_cpu_frequency_mhz gauge')
+          lines.append(f'mikrotik_system_cpu_frequency_mhz{{instance="{HOST}"}} {cpu_freq}')
+      
+          # Memory
+          mem_total = int(res.get("total-memory", 0))
+          mem_free = int(res.get("free-memory", 0))
+          mem_used = max(0, mem_total - mem_free)
+          lines.append('# HELP mikrotik_system_memory_total_bytes Total system memory in bytes')
+          lines.append('# TYPE mikrotik_system_memory_total_bytes gauge')
+          lines.append(f'mikrotik_system_memory_total_bytes{{instance="{HOST}"}} {mem_total}')
+          lines.append('# HELP mikrotik_system_memory_free_bytes Free system memory in bytes')
+          lines.append('# TYPE mikrotik_system_memory_free_bytes gauge')
+          lines.append(f'mikrotik_system_memory_free_bytes{{instance="{HOST}"}} {mem_free}')
+          lines.append('# HELP mikrotik_system_memory_used_bytes Used system memory in bytes')
+          lines.append('# TYPE mikrotik_system_memory_used_bytes gauge')
+          lines.append(f'mikrotik_system_memory_used_bytes{{instance="{HOST}"}} {mem_used}')
+      
+          # HDD / Storage
+          hdd_total = int(res.get("total-hdd-space", 0))
+          hdd_free = int(res.get("free-hdd-space", 0))
+          hdd_used = max(0, hdd_total - hdd_free)
+          lines.append('# HELP mikrotik_system_hdd_total_bytes Total storage space in bytes')
+          lines.append('# TYPE mikrotik_system_hdd_total_bytes gauge')
+          lines.append(f'mikrotik_system_hdd_total_bytes{{instance="{HOST}"}} {hdd_total}')
+          lines.append('# HELP mikrotik_system_hdd_free_bytes Free storage space in bytes')
+          lines.append('# TYPE mikrotik_system_hdd_free_bytes gauge')
+          lines.append(f'mikrotik_system_hdd_free_bytes{{instance="{HOST}"}} {hdd_free}')
+          lines.append('# HELP mikrotik_system_hdd_used_bytes Used storage space in bytes')
+          lines.append('# TYPE mikrotik_system_hdd_used_bytes gauge')
+          lines.append(f'mikrotik_system_hdd_used_bytes{{instance="{HOST}"}} {hdd_used}')
+      
+          # Uptime
+          uptime_sec = parse_uptime(res.get("uptime", "0s"))
+          lines.append('# HELP mikrotik_system_uptime_seconds Device uptime in seconds')
+          lines.append('# TYPE mikrotik_system_uptime_seconds counter')
+          lines.append(f'mikrotik_system_uptime_seconds{{instance="{HOST}"}} {uptime_sec}')
+      
+          # Health / Sensors
+          lines.append('# HELP mikrotik_health_temperature_celsius Temperature sensor readings')
+          lines.append('# TYPE mikrotik_health_temperature_celsius gauge')
+          for h in health:
+              name = h.get("name", "")
+              val = h.get("value", "0")
+              if name == "cpu-temperature":
+                  lines.append(f'mikrotik_health_temperature_celsius{{instance="{HOST}",sensor="cpu"}} {float(val)}')
+              elif name == "phy-temperature":
+                  lines.append(f'mikrotik_health_temperature_celsius{{instance="{HOST}",sensor="phy"}} {float(val)}')
+              elif name.startswith("board-temperature"):
+                  sensor_id = name.replace("board-temperature", "board")
+                  lines.append(f'mikrotik_health_temperature_celsius{{instance="{HOST}",sensor="{sensor_id}"}} {float(val)}')
+              elif name.startswith("fan") and "speed" in name:
+                  fan_id = name.split("-")[0]
+                  lines.append(f'mikrotik_health_fan_speed_rpm{{instance="{HOST}",fan="{fan_id}"}} {float(val)}')
+              elif name.startswith("fan") and "state" in name:
+                  fan_id = name.split("-")[0]
+                  st = 1 if val == "ok" else 0
+                  lines.append(f'mikrotik_health_fan_state{{instance="{HOST}",fan="{fan_id}"}} {st}')
+      
+          # Interfaces
+          lines.append('# HELP mikrotik_interface_running Operational link status (1 = running, 0 = down)')
+          lines.append('# TYPE mikrotik_interface_running gauge')
+          lines.append('# HELP mikrotik_interface_receive_bytes_total Interface received bytes')
+          lines.append('# TYPE mikrotik_interface_receive_bytes_total counter')
+          lines.append('# HELP mikrotik_interface_transmit_bytes_total Interface transmitted bytes')
+          lines.append('# TYPE mikrotik_interface_transmit_bytes_total counter')
+          lines.append('# HELP mikrotik_interface_receive_packets_total Interface received packets')
+          lines.append('# TYPE mikrotik_interface_receive_packets_total counter')
+          lines.append('# HELP mikrotik_interface_transmit_packets_total Interface transmitted packets')
+          lines.append('# TYPE mikrotik_interface_transmit_packets_total counter')
+          lines.append('# HELP mikrotik_interface_receive_drop_total Interface received packet drops')
+          lines.append('# TYPE mikrotik_interface_receive_drop_total counter')
+          lines.append('# HELP mikrotik_interface_transmit_drop_total Interface transmitted packet drops')
+          lines.append('# TYPE mikrotik_interface_transmit_drop_total counter')
+          lines.append('# HELP mikrotik_interface_receive_error_total Interface received errors')
+          lines.append('# TYPE mikrotik_interface_receive_error_total counter')
+          lines.append('# HELP mikrotik_interface_transmit_error_total Interface transmitted errors')
+          lines.append('# TYPE mikrotik_interface_transmit_error_total counter')
+          lines.append('# HELP mikrotik_interface_link_downs_total Interface link down count')
+          lines.append('# TYPE mikrotik_interface_link_downs_total counter')
+          lines.append('# HELP mikrotik_interface_actual_mtu Interface operational MTU')
+          lines.append('# TYPE mikrotik_interface_actual_mtu gauge')
+      
+          for iface in interfaces:
+              iname = iface.get("name", "")
+              itype = iface.get("type", "")
+              # Clean label values to avoid broken quotes
+              safe_iname = iname.replace('"', '')
+              running = 1 if iface.get("running") == "true" else 0
+              rx_b = int(iface.get("rx-byte", 0))
+              tx_b = int(iface.get("tx-byte", 0))
+              rx_p = int(iface.get("rx-packet", 0))
+              tx_p = int(iface.get("tx-packet", 0))
+              rx_d = int(iface.get("rx-drop", 0))
+              tx_d = int(iface.get("tx-drop", 0))
+              rx_e = int(iface.get("rx-error", 0))
+              tx_e = int(iface.get("tx-error", 0))
+              downs = int(iface.get("link-downs", 0))
+              mtu = int(iface.get("actual-mtu", 1500))
+      
+              labels = f'instance="{HOST}",interface="{safe_iname}",type="{itype}"'
+              lines.append(f'mikrotik_interface_running{{{labels}}} {running}')
+              lines.append(f'mikrotik_interface_receive_bytes_total{{{labels}}} {rx_b}')
+              lines.append(f'mikrotik_interface_transmit_bytes_total{{{labels}}} {tx_b}')
+              lines.append(f'mikrotik_interface_receive_packets_total{{{labels}}} {rx_p}')
+              lines.append(f'mikrotik_interface_transmit_packets_total{{{labels}}} {tx_p}')
+              lines.append(f'mikrotik_interface_receive_drop_total{{{labels}}} {rx_d}')
+              lines.append(f'mikrotik_interface_transmit_drop_total{{{labels}}} {tx_d}')
+              lines.append(f'mikrotik_interface_receive_error_total{{{labels}}} {rx_e}')
+              lines.append(f'mikrotik_interface_transmit_error_total{{{labels}}} {tx_e}')
+              lines.append(f'mikrotik_interface_link_downs_total{{{labels}}} {downs}')
+              lines.append(f'mikrotik_interface_actual_mtu{{{labels}}} {mtu}')
+      
+          return "\n".join(lines) + "\n"
+      
+      class MetricsHandler(http.server.BaseHTTPRequestHandler):
+          def do_GET(self):
+              global _last_scrape, _cached_metrics
+              if self.path == "/metrics":
+                  now = time.time()
+                  if now - _last_scrape > CACHE_DURATION:
+                      _cached_metrics = generate_metrics()
+                      _last_scrape = now
+                  self.send_response(200)
+                  self.send_header("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
+                  self.end_headers()
+                  self.wfile.write(_cached_metrics.encode("utf-8"))
+              elif self.path == "/health" or self.path == "/":
+                  self.send_response(200)
+                  self.send_header("Content-Type", "text/plain")
+                  self.end_headers()
+                  self.wfile.write(b"OK\n")
+              else:
+                  self.send_response(404)
+                  self.end_headers()
+      
+          def log_message(self, format, *args):
+              # Suppress routine GET logging unless error
+              if args and str(args[1]) != "200":
+                  super().log_message(format, *args)
+      
+      def main():
+          server = http.server.ThreadingHTTPServer(("0.0.0.0", PORT), MetricsHandler)
+          print(f"MikroTik Exporter listening on port {PORT} (monitoring {HOST})...", file=sys.stderr)
+          try:
+              server.serve_forever()
+          except KeyboardInterrupt:
+              pass
+      
+      if __name__ == "__main__":
+          main()
+  grafana_dash_mikrotik:
+    content: |
+      {
+        "annotations": {
+          "list": [
+            {
+              "builtIn": 1,
+              "datasource": {
+                "type": "grafana",
+                "uid": "-- Grafana --"
+              },
+              "enable": true,
+              "hide": true,
+              "name": "Annotations & Alerts",
+              "type": "dashboard"
+            }
+          ]
+        },
+        "editable": true,
+        "fiscalYearStartMonth": 0,
+        "graphTooltip": 1,
+        "id": null,
+        "links": [],
+        "liveNow": false,
+        "panels": [
+          {
+            "collapsed": false,
+            "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+            "id": 1,
+            "title": "Switch Overview & Hardware Health",
+            "type": "row"
+          },
+          {
+            "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+            "fieldConfig": {
+              "defaults": {
+                "color": { "mode": "thresholds" },
+                "mappings": [
+                  {
+                    "options": {
+                      "0": { "color": "red", "text": "OFFLINE" },
+                      "1": { "color": "green", "text": "ONLINE" }
+                    },
+                    "type": "value"
+                  }
+                ],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "red", "value": null },
+                    { "color": "green", "value": 1 }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": { "h": 3, "w": 4, "x": 0, "y": 1 },
+            "id": 2,
+            "options": {
+              "colorMode": "background",
+              "graphMode": "none",
+              "justifyMode": "center",
+              "orientation": "auto",
+              "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+              "textMode": "auto"
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "mikrotik_up{instance=~\"$$switch\"}",
+                "legendFormat": "Status",
+                "refId": "A"
+              }
+            ],
+            "title": "Device Status",
+            "type": "stat"
+          },
+          {
+            "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+            "fieldConfig": {
+              "defaults": {
+                "color": { "mode": "thresholds" },
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [{ "color": "blue", "value": null }]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": { "h": 3, "w": 6, "x": 4, "y": 1 },
+            "id": 3,
+            "options": {
+              "colorMode": "value",
+              "graphMode": "none",
+              "justifyMode": "center",
+              "orientation": "auto",
+              "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+              "textMode": "auto"
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "mikrotik_system_info{instance=~\"$$switch\"}",
+                "legendFormat": "{{board_name}} (v{{version}})",
+                "refId": "A"
+              }
+            ],
+            "title": "Hardware & RouterOS",
+            "type": "stat"
+          },
+          {
+            "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+            "fieldConfig": {
+              "defaults": {
+                "color": { "mode": "thresholds" },
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [{ "color": "green", "value": null }]
+                },
+                "unit": "s"
+              },
+              "overrides": []
+            },
+            "gridPos": { "h": 3, "w": 4, "x": 10, "y": 1 },
+            "id": 4,
+            "options": {
+              "colorMode": "value",
+              "graphMode": "none",
+              "justifyMode": "center",
+              "orientation": "auto",
+              "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+              "textMode": "auto"
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "mikrotik_system_uptime_seconds{instance=~\"$$switch\"}",
+                "legendFormat": "Uptime",
+                "refId": "A"
+              }
+            ],
+            "title": "Uptime",
+            "type": "stat"
+          },
+          {
+            "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+            "fieldConfig": {
+              "defaults": {
+                "color": { "mode": "thresholds" },
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [{ "color": "green", "value": null }]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": { "h": 3, "w": 4, "x": 14, "y": 1 },
+            "id": 5,
+            "options": {
+              "colorMode": "value",
+              "graphMode": "none",
+              "justifyMode": "center",
+              "orientation": "auto",
+              "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+              "textMode": "auto"
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "count(mikrotik_interface_running{instance=~\"$$switch\",type=\"ether\"} == 1)",
+                "legendFormat": "Active Ethernet Ports",
+                "refId": "A"
+              }
+            ],
+            "title": "Active Ports",
+            "type": "stat"
+          },
+          {
+            "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+            "fieldConfig": {
+              "defaults": {
+                "color": { "mode": "palette-classic" },
+                "custom": {
+                  "drawStyle": "line",
+                  "fillOpacity": 15,
+                  "lineInterpolation": "smooth",
+                  "lineWidth": 2
+                },
+                "unit": "bps"
+              },
+              "overrides": []
+            },
+            "gridPos": { "h": 3, "w": 6, "x": 18, "y": 1 },
+            "id": 6,
+            "options": {
+              "colorMode": "value",
+              "graphMode": "area",
+              "justifyMode": "center",
+              "orientation": "auto",
+              "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+              "textMode": "auto"
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "sum(rate(mikrotik_interface_receive_bytes_total{instance=~\"$$switch\",type=\"ether\"}[1m])) * 8",
+                "legendFormat": "Total Ingress",
+                "refId": "A"
+              },
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "sum(rate(mikrotik_interface_transmit_bytes_total{instance=~\"$$switch\",type=\"ether\"}[1m])) * 8",
+                "legendFormat": "Total Egress",
+                "refId": "B"
+              }
+            ],
+            "title": "Total Switch Traffic",
+            "type": "stat"
+          },
+          {
+            "collapsed": false,
+            "gridPos": { "h": 1, "w": 24, "x": 0, "y": 4 },
+            "id": 7,
+            "title": "System Resources & Environmental Sensors",
+            "type": "row"
+          },
+          {
+            "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+            "fieldConfig": {
+              "defaults": {
+                "color": { "mode": "thresholds" },
+                "mappings": [],
+                "max": 100,
+                "min": 0,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": null },
+                    { "color": "yellow", "value": 60 },
+                    { "color": "red", "value": 85 }
+                  ]
+                },
+                "unit": "percent"
+              },
+              "overrides": []
+            },
+            "gridPos": { "h": 6, "w": 4, "x": 0, "y": 5 },
+            "id": 8,
+            "options": {
+              "orientation": "auto",
+              "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "mikrotik_system_cpu_load_percent{instance=~\"$$switch\"}",
+                "legendFormat": "CPU Load",
+                "refId": "A"
+              }
+            ],
+            "title": "CPU Load",
+            "type": "gauge"
+          },
+          {
+            "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+            "fieldConfig": {
+              "defaults": {
+                "color": { "mode": "thresholds" },
+                "mappings": [],
+                "max": 100,
+                "min": 0,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": null },
+                    { "color": "yellow", "value": 70 },
+                    { "color": "red", "value": 90 }
+                  ]
+                },
+                "unit": "percent"
+              },
+              "overrides": []
+            },
+            "gridPos": { "h": 6, "w": 4, "x": 4, "y": 5 },
+            "id": 9,
+            "options": {
+              "orientation": "auto",
+              "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "(mikrotik_system_memory_used_bytes{instance=~\"$$switch\"} / mikrotik_system_memory_total_bytes{instance=~\"$$switch\"}) * 100",
+                "legendFormat": "Memory",
+                "refId": "A"
+              }
+            ],
+            "title": "Memory Usage",
+            "type": "gauge"
+          },
+          {
+            "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+            "fieldConfig": {
+              "defaults": {
+                "color": { "mode": "thresholds" },
+                "mappings": [],
+                "max": 100,
+                "min": 0,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": null },
+                    { "color": "yellow", "value": 75 },
+                    { "color": "red", "value": 90 }
+                  ]
+                },
+                "unit": "percent"
+              },
+              "overrides": []
+            },
+            "gridPos": { "h": 6, "w": 4, "x": 8, "y": 5 },
+            "id": 10,
+            "options": {
+              "orientation": "auto",
+              "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "(mikrotik_system_hdd_used_bytes{instance=~\"$$switch\"} / mikrotik_system_hdd_total_bytes{instance=~\"$$switch\"}) * 100",
+                "legendFormat": "Storage",
+                "refId": "A"
+              }
+            ],
+            "title": "Storage Usage",
+            "type": "gauge"
+          },
+          {
+            "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+            "fieldConfig": {
+              "defaults": {
+                "custom": {
+                  "drawStyle": "line",
+                  "fillOpacity": 15,
+                  "lineInterpolation": "smooth",
+                  "lineWidth": 2
+                },
+                "unit": "celsius"
+              },
+              "overrides": []
+            },
+            "gridPos": { "h": 6, "w": 8, "x": 12, "y": 5 },
+            "id": 11,
+            "options": {
+              "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] },
+              "tooltip": { "mode": "multi" }
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "mikrotik_health_temperature_celsius{instance=~\"$$switch\"}",
+                "legendFormat": "{{sensor}} Temp",
+                "refId": "A"
+              }
+            ],
+            "title": "Hardware Temperatures",
+            "type": "timeseries"
+          },
+          {
+            "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+            "fieldConfig": {
+              "defaults": {
+                "color": { "mode": "thresholds" },
+                "mappings": [],
+                "max": 6000,
+                "min": 0,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": null },
+                    { "color": "yellow", "value": 4500 },
+                    { "color": "red", "value": 5500 }
+                  ]
+                },
+                "unit": "rotrpm"
+              },
+              "overrides": []
+            },
+            "gridPos": { "h": 6, "w": 4, "x": 20, "y": 5 },
+            "id": 12,
+            "options": {
+              "orientation": "auto",
+              "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+              "showThresholdLabels": false,
+              "showThresholdMarkers": true
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "mikrotik_health_fan_speed_rpm{instance=~\"$$switch\"}",
+                "legendFormat": "{{fan}} Speed",
+                "refId": "A"
+              }
+            ],
+            "title": "Cooling Fan Speed",
+            "type": "gauge"
+          },
+          {
+            "collapsed": false,
+            "gridPos": { "h": 1, "w": 24, "x": 0, "y": 11 },
+            "id": 13,
+            "title": "Physical Port Operational Status",
+            "type": "row"
+          },
+          {
+            "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+            "fieldConfig": {
+              "defaults": {
+                "color": { "mode": "thresholds" },
+                "mappings": [
+                  {
+                    "options": {
+                      "0": { "color": "semi-dark-red", "text": "DOWN" },
+                      "1": { "color": "green", "text": "UP" }
+                    },
+                    "type": "value"
+                  }
+                ],
+                "max": 1,
+                "min": 0,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "red", "value": null },
+                    { "color": "green", "value": 1 }
+                  ]
+                }
+              },
+              "overrides": []
+            },
+            "gridPos": { "h": 5, "w": 24, "x": 0, "y": 12 },
+            "id": 14,
+            "options": {
+              "displayMode": "gradient",
+              "minVizHeight": 10,
+              "minVizWidth": 0,
+              "orientation": "horizontal",
+              "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+              "showUnfilled": true
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "mikrotik_interface_running{instance=~\"$$switch\",type=\"ether\"}",
+                "legendFormat": "{{interface}}",
+                "refId": "A"
+              }
+            ],
+            "title": "Switch Port Link State (10GbE / 2.5GbE / GbE)",
+            "type": "bargauge"
+          },
+          {
+            "collapsed": false,
+            "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 },
+            "id": 15,
+            "title": "Interface Throughput & Bandwidth",
+            "type": "row"
+          },
+          {
+            "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+            "fieldConfig": {
+              "defaults": {
+                "custom": {
+                  "drawStyle": "line",
+                  "fillOpacity": 15,
+                  "lineInterpolation": "smooth",
+                  "lineWidth": 2
+                },
+                "unit": "bps"
+              },
+              "overrides": []
+            },
+            "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
+            "id": 16,
+            "options": {
+              "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+              "tooltip": { "mode": "multi" }
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "rate(mikrotik_interface_receive_bytes_total{instance=~\"$$switch\",type=\"ether\"}[1m]) * 8",
+                "legendFormat": "Rx: {{interface}}",
+                "refId": "A"
+              }
+            ],
+            "title": "Ethernet Ingress Throughput (Rx)",
+            "type": "timeseries"
+          },
+          {
+            "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+            "fieldConfig": {
+              "defaults": {
+                "custom": {
+                  "drawStyle": "line",
+                  "fillOpacity": 15,
+                  "lineInterpolation": "smooth",
+                  "lineWidth": 2
+                },
+                "unit": "bps"
+              },
+              "overrides": []
+            },
+            "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
+            "id": 17,
+            "options": {
+              "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max", "lastNotNull"] },
+              "tooltip": { "mode": "multi" }
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "rate(mikrotik_interface_transmit_bytes_total{instance=~\"$$switch\",type=\"ether\"}[1m]) * 8",
+                "legendFormat": "Tx: {{interface}}",
+                "refId": "A"
+              }
+            ],
+            "title": "Ethernet Egress Throughput (Tx)",
+            "type": "timeseries"
+          },
+          {
+            "collapsed": false,
+            "gridPos": { "h": 1, "w": 24, "x": 0, "y": 26 },
+            "id": 18,
+            "title": "Packet Rates, Errors & VLAN Distribution",
+            "type": "row"
+          },
+          {
+            "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+            "fieldConfig": {
+              "defaults": {
+                "custom": {
+                  "drawStyle": "line",
+                  "fillOpacity": 10,
+                  "lineInterpolation": "smooth",
+                  "lineWidth": 2
+                },
+                "unit": "pps"
+              },
+              "overrides": []
+            },
+            "gridPos": { "h": 7, "w": 8, "x": 0, "y": 27 },
+            "id": 19,
+            "options": {
+              "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+              "tooltip": { "mode": "multi" }
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "sum(rate(mikrotik_interface_receive_packets_total{instance=~\"$$switch\",type=\"ether\"}[1m])) by (interface)",
+                "legendFormat": "Rx: {{interface}}",
+                "refId": "A"
+              },
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "sum(rate(mikrotik_interface_transmit_packets_total{instance=~\"$$switch\",type=\"ether\"}[1m])) by (interface)",
+                "legendFormat": "Tx: {{interface}}",
+                "refId": "B"
+              }
+            ],
+            "title": "Physical Port Packet Rates",
+            "type": "timeseries"
+          },
+          {
+            "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+            "fieldConfig": {
+              "defaults": {
+                "custom": {
+                  "drawStyle": "line",
+                  "fillOpacity": 15,
+                  "lineInterpolation": "smooth",
+                  "lineWidth": 2
+                },
+                "unit": "bps"
+              },
+              "overrides": []
+            },
+            "gridPos": { "h": 7, "w": 8, "x": 8, "y": 27 },
+            "id": 20,
+            "options": {
+              "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["mean", "max"] },
+              "tooltip": { "mode": "multi" }
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "(rate(mikrotik_interface_receive_bytes_total{instance=~\"$$switch\",type=\"vlan\"}[1m]) + rate(mikrotik_interface_transmit_bytes_total{instance=~\"$$switch\",type=\"vlan\"}[1m])) * 8",
+                "legendFormat": "VLAN: {{interface}}",
+                "refId": "A"
+              }
+            ],
+            "title": "VLAN Throughput Distribution",
+            "type": "timeseries"
+          },
+          {
+            "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+            "fieldConfig": {
+              "defaults": {
+                "custom": {
+                  "drawStyle": "line",
+                  "fillOpacity": 20,
+                  "lineInterpolation": "smooth",
+                  "lineWidth": 2
+                },
+                "unit": "pps"
+              },
+              "overrides": []
+            },
+            "gridPos": { "h": 7, "w": 8, "x": 16, "y": 27 },
+            "id": 21,
+            "options": {
+              "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] },
+              "tooltip": { "mode": "multi" }
+            },
+            "pluginVersion": "10.0.0",
+            "targets": [
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "rate(mikrotik_interface_receive_drop_total{instance=~\"$$switch\"}[1m])",
+                "legendFormat": "Rx Drop: {{interface}}",
+                "refId": "A"
+              },
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "rate(mikrotik_interface_transmit_drop_total{instance=~\"$$switch\"}[1m])",
+                "legendFormat": "Tx Drop: {{interface}}",
+                "refId": "B"
+              },
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "rate(mikrotik_interface_receive_error_total{instance=~\"$$switch\"}[1m])",
+                "legendFormat": "Rx Error: {{interface}}",
+                "refId": "C"
+              },
+              {
+                "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+                "expr": "rate(mikrotik_interface_transmit_error_total{instance=~\"$$switch\"}[1m])",
+                "legendFormat": "Tx Error: {{interface}}",
+                "refId": "D"
+              }
+            ],
+            "title": "Packet Drops & Errors",
+            "type": "timeseries"
+          }
+        ],
+        "refresh": "15s",
+        "schemaVersion": 38,
+        "style": "dark",
+        "tags": ["mikrotik", "switch", "network", "routeros", "homelab"],
+        "templating": {
+          "list": [
+            {
+              "current": {
+                "selected": true,
+                "text": "switch-1.iye.internal",
+                "value": "switch-1.iye.internal"
+              },
+              "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+              },
+              "definition": "label_values(mikrotik_up, instance)",
+              "hide": 0,
+              "includeAll": false,
+              "multi": false,
+              "name": "switch",
+              "options": [],
+              "query": {
+                "query": "label_values(mikrotik_up, instance)",
+                "refId": "StandardVariableQuery"
+              },
+              "refresh": 1,
+              "regex": "",
+              "skipUrlSync": false,
+              "sort": 1,
+              "type": "query"
+            }
+          ]
+        },
+        "time": { "from": "now-1h", "to": "now" },
+        "timepicker": {},
+        "timezone": "",
+        "title": "MikroTik Switch 1 (CRS310-8G+2S+)",
+        "uid": "mikrotik-switch-1",
         "version": 1
       }

@@ -57,6 +57,7 @@ This stack provides centralized network monitoring, automated configuration vers
 | **Grafana** | `grafana/grafana-oss:latest` | `3000` | Telemetry dashboards pre-provisioned with the Prometheus data source |
 | **Trivy** | `aquasec/trivy:latest` | `4954` | Vulnerability and security scanner server for containers, images, and filesystems |
 | **Trivy Exporter** | `aquasec/trivy:latest` | `9091` | Automated container vulnerability scanner discovering running Docker containers & exporting Prometheus metrics |
+| **MikroTik Exporter** | `python:3-alpine` | `9436` | Lightweight RouterOS v7 REST exporter translating switch telemetry, thermals & port rates into Prometheus metrics |
 | **NetBox** | `netboxcommunity/netbox:latest` | `8080` | IPAM & DCIM network infrastructure source of truth, device modeling & prefix tracking |
 | **NetBox Worker** | `netboxcommunity/netbox:latest` | — | Redis Queue (RQ) background task worker for NetBox webhooks, scripts & reports |
 | **Authentik** | `ghcr.io/goauthentik/server:2026.8` | `9002` (9000) | Central Identity Provider, Single Sign-On (SSO), Forward Auth, and MFA/Passkeys |
@@ -262,6 +263,7 @@ All Grafana dashboards are automatically provisioned into the **Homelab** folder
 | **Homelab Overview** | [`homelab-overview.json`](grafana/provisioning/dashboards/json/homelab-overview.json) | Real-time target reachability (Up/Down) for all jobs, cluster resource averages, active WiFi client totals, and Caddy HTTP request rates/p95 latency. |
 | **Proxmox VE Cluster** | [`proxmox-cluster.json`](grafana/provisioning/dashboards/json/proxmox-cluster.json) | Total cluster capacity (28 cores, 77 GB RAM), per-node CPU/RAM utilization gauges, load averages, ZFS ARC cache size & hit rates, root storage, and network interface throughput (`virt-1`, `virt-2`, `virt-3`). |
 | **OpenWrt APs & WiFi** | [`openwrt-wifi.json`](grafana/provisioning/dashboards/json/openwrt-wifi.json) | Active client counts (77+ clients), client distribution per AP, 5 GHz vs 2.4 GHz radio frequency split, 802.11s mesh backhaul status & signal dBm, and AP CPU/memory health across all 6 APs. |
+| **MikroTik Switch 1 (CRS310)** | [`mikrotik-switch.json`](grafana/provisioning/dashboards/json/mikrotik-switch.json) | Hardware telemetry (CPU load, memory, storage), environmental sensors (CPU/PHY/board temps, fan RPM), 10GbE/2.5GbE/GbE port link states, real-time interface throughput (Rx/Tx bits/sec), packet rates, errors/drops, and VLAN traffic distribution. |
 | **Docker Host Telemetry** | [`docker-host.json`](grafana/provisioning/dashboards/json/docker-host.json) | Host uptime, CPU mode breakdown (user, system, iowait), 1m/5m/15m load averages, memory allocation (used, cached, buffers, swap), NVMe disk space & I/O, and `eth0` network throughput. |
 | **Homelab Security (Trivy)** | [`trivy-security.json`](grafana/provisioning/dashboards/json/trivy-security.json) | Container image security posture, Critical/High/Medium/Low vulnerability totals, per-container risk distribution, scan cycle age, and actionable CVE findings table with affected packages and fixed versions. |
 

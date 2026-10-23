@@ -57,6 +57,10 @@
         icon: mikrotik
         href: http://${MIKROTIK_CORE_HOST:-switch-1.iye.internal}
         description: Core Switch 1 (RouterOS / WebFig)
+    - Switch 1 Metrics:
+        icon: grafana
+        href: https://grafana.${DOMAIN:-iye.internal}/d/mikrotik-switch-1
+        description: CRS310 Port Telemetry & Thermals (Grafana)
     - MikroTik Switch 2:
         icon: mikrotik
         href: http://${MIKROTIK_SW2_HOST:-switch-2.iye.internal}

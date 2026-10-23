@@ -54,11 +54,10 @@ scrape_configs:
 
   # MikroTik Switches & Routers (RouterOS / SwOS)
   - job_name: "mikrotik"
-    scrape_interval: 30s
+    scrape_interval: 15s
     static_configs:
-      - targets:
-          # - "switch-1.iye.internal"
-          # - "switch-2.iye.internal"
+      - targets: ["mikrotik_exporter:9436"]
         labels:
           role: "switch"
           vendor: "mikrotik"
+          instance: "switch-1.iye.internal"
