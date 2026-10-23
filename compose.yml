@@ -637,8 +637,7 @@ services:
       - authentik-media-data:/media
       - authentik-custom-templates:/custom-templates
     ports:
-      - "9000:9000"
-      - "9443:9443"
+      - "9002:9000"
     depends_on:
       authentik_db:
         condition: service_healthy
