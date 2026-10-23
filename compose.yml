@@ -638,8 +638,8 @@ services:
   # Authentik: Core Identity Provider & SSO Web Application (Server)
   # ---------------------------------------------------------------------------
   authentik_server:
-    image: ghcr.io/goauthentik/server:2026.8
-    pull_policy: always
+    image: ghcr.io/goauthentik/server:2024.12
+    pull_policy: if_not_present
     container_name: authentik_server
     restart: always
     command:
@@ -670,8 +670,8 @@ services:
   # Authentik: Asynchronous Task Worker & Background Jobs
   # ---------------------------------------------------------------------------
   authentik_worker:
-    image: ghcr.io/goauthentik/server:2026.8
-    pull_policy: always
+    image: ghcr.io/goauthentik/server:2024.12
+    pull_policy: if_not_present
     container_name: authentik_worker
     restart: always
     command:
@@ -1158,6 +1158,48 @@ configs:
                 summary: "Low disk space on {{ $$labels.instance }}"
                 description: "Root partition on {{ $$labels.instance }} has less than 10% available space."
 
+            # -----------------------------------------------------------------
+            # Network Loops, Broadcast Storms & Interface Telemetry Alerts
+            # -----------------------------------------------------------------
+            - alert: NetworkBroadcastStorm
+              expr: rate(mikrotik_interface_receive_packets_total{type="ether"}[1m]) > 20000
+              for: 30s
+              labels:
+                severity: critical
+              annotations:
+                summary: "Potential Broadcast Storm or L2 Loop on {{ $$labels.instance }} ({{ $$labels.interface }})"
+                description: "Interface {{ $$labels.interface }} is receiving {{ $$value }} packets/sec for >30s, indicating an active loop or broadcast flood."
+
+            - alert: SwitchInterfacePacketDrops
+              expr: rate(mikrotik_interface_receive_drop_total[1m]) > 50 or rate(mikrotik_interface_transmit_drop_total[1m]) > 50
+              for: 1m
+              labels:
+                severity: warning
+              annotations:
+                summary: "High packet drop rate on {{ $$labels.instance }} ({{ $$labels.interface }})"
+                description: "Interface {{ $$labels.interface }} buffer is dropping {{ $$value }} packets/sec (possible loop or link congestion)."
+
+            - alert: SwitchLinkFlapping
+              expr: rate(mikrotik_interface_link_downs_total{type="ether"}[5m]) > 0.05
+              for: 2m
+              labels:
+                severity: warning
+              annotations:
+                summary: "Link flapping on {{ $$labels.instance }} ({{ $$labels.interface }})"
+                description: "Port {{ $$labels.interface }} has experienced repeated link state changes in the last 5 minutes (flapping or RSTP port blocking/unblocking)."
+
+            - alert: OpenWrtBroadcastMulticastFlood
+              expr: sum by (instance) (rate(node_network_receive_multicast_total{job="openwrt"}[1m])) > 5000
+              for: 1m
+              labels:
+                severity: warning
+              annotations:
+                summary: "Excessive multicast/broadcast flood on Access Point {{ $$labels.instance }}"
+                description: "OpenWrt node {{ $$labels.instance }} is receiving {{ $$value }} multicast/broadcast packets/sec, indicating a possible wireless mesh bridge loop."
+
+            # -----------------------------------------------------------------
+            # Container Security Alerts
+            # -----------------------------------------------------------------
             - alert: CriticalVulnerabilityDetected
               expr: sum(trivy_image_vulnerabilities{severity="CRITICAL"}) > 0
               for: 15m
