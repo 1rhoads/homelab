@@ -413,7 +413,7 @@ services:
   # ---------------------------------------------------------------------------
   mikrotik-exporter:
     image: python:3-alpine
-    pull_policy: always
+    pull_policy: if_not_present
     container_name: mikrotik_exporter
     restart: always
     command: ["python3", "/app/exporter.py"]
