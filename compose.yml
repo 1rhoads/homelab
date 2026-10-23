@@ -616,7 +616,7 @@ services:
   # Authentik: Core Identity Provider & SSO Web Application (Server)
   # ---------------------------------------------------------------------------
   authentik_server:
-    image: ghcr.io/goauthentik/server:2024.12
+    image: ghcr.io/goauthentik/server:2026.8
     pull_policy: always
     container_name: authentik_server
     restart: always
@@ -648,7 +648,7 @@ services:
   # Authentik: Asynchronous Task Worker & Background Jobs
   # ---------------------------------------------------------------------------
   authentik_worker:
-    image: ghcr.io/goauthentik/server:2024.12
+    image: ghcr.io/goauthentik/server:2026.8
     pull_policy: always
     container_name: authentik_worker
     restart: always

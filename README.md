@@ -59,8 +59,8 @@ This stack provides centralized network monitoring, automated configuration vers
 | **Trivy Exporter** | `aquasec/trivy:latest` | `9091` | Automated container vulnerability scanner discovering running Docker containers & exporting Prometheus metrics |
 | **NetBox** | `netboxcommunity/netbox:latest` | `8080` | IPAM & DCIM network infrastructure source of truth, device modeling & prefix tracking |
 | **NetBox Worker** | `netboxcommunity/netbox:latest` | — | Redis Queue (RQ) background task worker for NetBox webhooks, scripts & reports |
-| **Authentik** | `ghcr.io/goauthentik/server:2024.12` | `9002` (9000) | Central Identity Provider, Single Sign-On (SSO), Forward Auth, and MFA/Passkeys |
-| **Authentik Worker** | `ghcr.io/goauthentik/server:2024.12` | — | Background task worker for Authentik discovery, outposts, and tasks |
+| **Authentik** | `ghcr.io/goauthentik/server:2026.8` | `9002` (9000) | Central Identity Provider, Single Sign-On (SSO), Forward Auth, and MFA/Passkeys |
+| **Authentik Worker** | `ghcr.io/goauthentik/server:2026.8` | — | Background task worker for Authentik discovery, outposts, and tasks |
 | **Ansible Semaphore** | `semaphoreui/semaphore:latest` | `3002` (3000) | Web-based automation control plane & task scheduler for Ansible patching playbooks |
 | **PostgreSQL** | `postgres:16-alpine` | — | Dedicated relational database backend for NetBox |
 | **NetBox Redis** | `redis:7-alpine` | — | Dedicated caching and message queue broker for NetBox |
