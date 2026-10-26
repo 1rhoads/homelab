@@ -454,6 +454,25 @@ services:
       - "com.centurylinklabs.watchtower.enable=false"
 
   # ---------------------------------------------------------------------------
+  # Dockhand: Modern Self-Hosted Docker Management & Container Web UI
+  # ---------------------------------------------------------------------------
+  dockhand:
+    image: fnsys/dockhand:latest
+    pull_policy: if_not_present
+    container_name: dockhand
+    restart: always
+    ports:
+      - "${DOCKHAND_PORT:-3003}:3000"
+    environment:
+      - "TZ=${TZ:-UTC}"
+      - "PORT=3000"
+      - "HOST=0.0.0.0"
+      - "DATA_DIR=/app/data"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - dockhand-data:/app/data
+
+  # ---------------------------------------------------------------------------
   # Node Exporter: Docker Host Hardware & OS Telemetry
   # ---------------------------------------------------------------------------
   node-exporter:
@@ -720,6 +739,7 @@ volumes:
   authentik-media-data:
   authentik-custom-templates:
   authentik-certs-data:
+  dockhand-data:
 
 # -----------------------------------------------------------------------------
 # Embedded Configurations (Self-Contained for Portainer Web Editor & Git)
@@ -792,6 +812,12 @@ configs:
       semaphore.{$$DOMAIN:homelab.local} {
       	tls internal
       	reverse_proxy semaphore:3000
+      }
+
+      # Dockhand Container Management Web UI
+      dockhand.{$$DOMAIN:homelab.local} {
+      	tls internal
+      	reverse_proxy dockhand:3000
       }
 
       # HomeGlow Smart Home & Family Dashboard
@@ -1292,6 +1318,12 @@ configs:
               icon: portainer
               href: https://${PORTAINER_HOST:-docker-homelab.iye.internal}:9443
               description: Docker & Stack Management
+          - Dockhand:
+              icon: docker
+              href: https://dockhand.${DOMAIN:-iye.internal}
+              description: Modern Docker Container & App Management UI
+              server: my-docker
+              container: dockhand
 
       - Network Switches (MikroTik):
           - MikroTik Switch 1:

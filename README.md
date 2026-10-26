@@ -63,6 +63,7 @@ This stack provides centralized network monitoring, automated configuration vers
 | **Authentik** | `ghcr.io/goauthentik/server:2024.12` | `9002` (9000) | Central Identity Provider, Single Sign-On (SSO), Forward Auth, and MFA/Passkeys |
 | **Authentik Worker** | `ghcr.io/goauthentik/server:2024.12` | — | Background task worker for Authentik discovery, outposts, and tasks |
 | **Ansible Semaphore** | `semaphoreui/semaphore:latest` | `3002` (3000) | Web-based automation control plane & task scheduler for Ansible patching playbooks |
+| **Dockhand** | `fnsys/dockhand:latest` | `3003` (3000) | Modern self-hosted Docker management platform, container manager & Web UI |
 | **PostgreSQL** | `postgres:16-alpine` | — | Dedicated relational database backend for NetBox |
 | **NetBox Redis** | `redis:7-alpine` | — | Dedicated caching and message queue broker for NetBox |
 | **MariaDB** | `mariadb:10.11` | — | High-performance LTS database store for LibreNMS |
@@ -84,6 +85,7 @@ All HTTP/HTTPS requests to these URLs are intercepted by **Caddy** on ports 80/4
 | **`iye.internal`** | `A` | `<DOCKER_HOST_IP>` | Homepage Dashboard (Apex domain fallback) |
 | **`netbox.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | NetBox IPAM & DCIM Web UI & REST API |
 | **`semaphore.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Ansible Semaphore Automation Web UI |
+| **`dockhand.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Dockhand Container Management Web UI |
 | **`librenms.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | LibreNMS Web UI |
 | **`grafana.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Grafana Telemetry Dashboards |
 | **`prometheus.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Prometheus Web UI & Scrape Engine |

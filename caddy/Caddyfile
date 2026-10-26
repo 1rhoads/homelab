@@ -55,6 +55,12 @@ semaphore.{$DOMAIN:homelab.local} {
 	reverse_proxy semaphore:3000
 }
 
+# Dockhand Container Management Web UI
+dockhand.{$DOMAIN:homelab.local} {
+	tls internal
+	reverse_proxy dockhand:3000
+}
+
 # HomeGlow Smart Home & Family Dashboard
 homeglow.{$DOMAIN:homelab.local} {
 	tls internal

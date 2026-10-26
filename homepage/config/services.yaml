@@ -51,6 +51,12 @@
         icon: portainer
         href: https://${PORTAINER_HOST:-docker-homelab.iye.internal}:9443
         description: Docker & Stack Management
+    - Dockhand:
+        icon: docker
+        href: https://dockhand.${DOMAIN:-iye.internal}
+        description: Modern Docker Container & App Management UI
+        server: my-docker
+        container: dockhand
 
 - Network Switches (MikroTik):
     - MikroTik Switch 1:
