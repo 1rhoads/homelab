@@ -57,6 +57,12 @@
         description: Modern Docker Container & App Management UI
         server: my-docker
         container: dockhand
+    - BentoPDF:
+        icon: mupdf
+        href: https://pdf.${DOMAIN:-iye.internal}
+        description: Privacy-First Client-Side WebAssembly PDF Toolkit
+        server: my-docker
+        container: BentoPDF
 
 - Network Switches (MikroTik):
     - MikroTik Switch 1:

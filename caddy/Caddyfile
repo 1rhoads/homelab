@@ -1,6 +1,13 @@
 {
 	# Global options
 	admin 0.0.0.0:2019
+	metrics
+}
+
+# BentoPDF - Privacy-First WebAssembly PDF Toolkit
+pdf.{$DOMAIN:homelab.local}, bentopdf.{$DOMAIN:homelab.local} {
+	tls internal
+	reverse_proxy bentopdf:8080
 }
 
 # Main Homelab Dashboard (Homepage)
@@ -40,7 +47,16 @@ oxidized.{$DOMAIN:homelab.local} {
 # Trivy Security Scanner API
 trivy.{$DOMAIN:homelab.local} {
 	tls internal
-	reverse_proxy trivy:4954
+
+	@root path /
+	handle @root {
+		root * /srv/trivy
+		file_server
+	}
+
+	handle {
+		reverse_proxy trivy:4954
+	}
 }
 
 # NetBox IPAM & DCIM

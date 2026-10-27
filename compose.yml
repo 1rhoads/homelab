@@ -753,6 +753,12 @@ configs:
       	metrics
       }
 
+      # BentoPDF - Privacy-First WebAssembly PDF Toolkit
+      pdf.{$$DOMAIN:homelab.local}, bentopdf.{$$DOMAIN:homelab.local} {
+      	tls internal
+      	reverse_proxy bentopdf:8080
+      }
+
       # Main Homelab Dashboard (Homepage)
       # Accepts apex domain or homelab/homepage subdomains (e.g. homelab.iye.internal or iye.internal)
       {$$DOMAIN:homelab.local}, homelab.{$$DOMAIN:homelab.local}, homepage.{$$DOMAIN:homelab.local} {
@@ -1324,6 +1330,12 @@ configs:
               description: Modern Docker Container & App Management UI
               server: my-docker
               container: dockhand
+          - BentoPDF:
+              icon: mupdf
+              href: https://pdf.${DOMAIN:-iye.internal}
+              description: Privacy-First Client-Side WebAssembly PDF Toolkit
+              server: my-docker
+              container: BentoPDF
 
       - Network Switches (MikroTik):
           - MikroTik Switch 1:

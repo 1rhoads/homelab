@@ -64,6 +64,7 @@ This stack provides centralized network monitoring, automated configuration vers
 | **Authentik Worker** | `ghcr.io/goauthentik/server:2024.12` | — | Background task worker for Authentik discovery, outposts, and tasks |
 | **Ansible Semaphore** | `semaphoreui/semaphore:latest` | `3002` (3000) | Web-based automation control plane & task scheduler for Ansible patching playbooks |
 | **Dockhand** | `fnsys/dockhand:latest` | `3003` (3000) | Modern self-hosted Docker management platform, container manager & Web UI |
+| **BentoPDF** | `bentopdfteam/bentopdf:latest` | `8090` (8080) | Privacy-first WebAssembly client-side PDF toolkit and manipulation suite |
 | **PostgreSQL** | `postgres:16-alpine` | — | Dedicated relational database backend for NetBox |
 | **NetBox Redis** | `redis:7-alpine` | — | Dedicated caching and message queue broker for NetBox |
 | **MariaDB** | `mariadb:10.11` | — | High-performance LTS database store for LibreNMS |
@@ -86,6 +87,7 @@ All HTTP/HTTPS requests to these URLs are intercepted by **Caddy** on ports 80/4
 | **`netbox.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | NetBox IPAM & DCIM Web UI & REST API |
 | **`semaphore.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Ansible Semaphore Automation Web UI |
 | **`dockhand.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Dockhand Container Management Web UI |
+| **`pdf.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | BentoPDF WebAssembly PDF Toolkit (`bentopdf.iye.internal` alias) |
 | **`librenms.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | LibreNMS Web UI |
 | **`grafana.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Grafana Telemetry Dashboards |
 | **`prometheus.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Prometheus Web UI & Scrape Engine |
@@ -117,7 +119,7 @@ These records allow LibreNMS, Prometheus, and Homepage to reach your physical ha
 #### Example `/etc/hosts` Block (for local testing):
 ```hosts
 # Homelab Stack Services (Docker Host)
-192.168.254.164  homelab.iye.internal iye.internal netbox.iye.internal librenms.iye.internal grafana.iye.internal prometheus.iye.internal oxidized.iye.internal trivy.iye.internal docker-homelab.iye.internal
+192.168.254.164  homelab.iye.internal iye.internal netbox.iye.internal librenms.iye.internal grafana.iye.internal prometheus.iye.internal oxidized.iye.internal trivy.iye.internal dockhand.iye.internal pdf.iye.internal bentopdf.iye.internal docker-homelab.iye.internal
 
 # Homelab Devices
 192.168.254.111  virt-1.iye.internal
