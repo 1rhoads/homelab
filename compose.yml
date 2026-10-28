@@ -390,6 +390,7 @@ services:
     pull_policy: always
     container_name: trivy_exporter
     restart: always
+    working_dir: /app
     entrypoint: ["/bin/sh", "-c", "apk add --no-cache python3 >/dev/null 2>&1 && exec python3 /app/exporter.py"]
     ports:
       - "9091:9091"
@@ -416,6 +417,7 @@ services:
     pull_policy: if_not_present
     container_name: mikrotik_exporter
     restart: always
+    working_dir: /app
     command: ["python3", "/app/exporter.py"]
     ports:
       - "9436:9436"
