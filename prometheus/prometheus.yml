@@ -61,3 +61,32 @@ scrape_configs:
           role: "switch"
           vendor: "mikrotik"
           instance: "switch-1.iye.internal"
+
+  # NetBox IPAM & DCIM
+  - job_name: "netbox"
+    scrape_interval: 30s
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["netbox:8080"]
+        labels:
+          role: "ipam"
+          service: "netbox"
+
+  # Trivy Vulnerability Exporter
+  - job_name: "trivy"
+    scrape_interval: 30s
+    static_configs:
+      - targets: ["trivy_exporter:9091"]
+        labels:
+          role: "security"
+          service: "trivy"
+
+  # LibreNMS SNMP Poller Metrics (via Pushgateway)
+  - job_name: "librenms"
+    honor_labels: true
+    scrape_interval: 1m
+    static_configs:
+      - targets: ["pushgateway:9091"]
+        labels:
+          role: "network_snmp"
+          source: "librenms"

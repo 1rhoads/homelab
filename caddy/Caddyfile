@@ -38,6 +38,12 @@ prometheus.{$DOMAIN:homelab.local} {
 	reverse_proxy prometheus:9090
 }
 
+# Prometheus Pushgateway (LibreNMS Ingestion)
+pushgateway.{$DOMAIN:homelab.local} {
+	tls internal
+	reverse_proxy pushgateway:9091
+}
+
 # Oxidized Web UI & REST
 oxidized.{$DOMAIN:homelab.local} {
 	tls internal

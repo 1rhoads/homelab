@@ -33,6 +33,12 @@
         description: IPAM & Infrastructure Source of Truth
         server: my-docker
         container: netbox
+    - Pushgateway:
+        icon: prometheus
+        href: https://pushgateway.${DOMAIN:-iye.internal}
+        description: Prometheus Pushgateway (LibreNMS Ingestion)
+        server: my-docker
+        container: pushgateway
 
 - Virtualization & Servers:
     - Proxmox PVE 1:

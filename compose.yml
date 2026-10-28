@@ -326,6 +326,17 @@ services:
       - prometheus-data:/prometheus
 
   # ---------------------------------------------------------------------------
+  # Prometheus Pushgateway: Metrics Ingestion Buffer for LibreNMS Poller
+  # ---------------------------------------------------------------------------
+  pushgateway:
+    image: prom/pushgateway:latest
+    pull_policy: if_not_present
+    container_name: pushgateway
+    restart: always
+    ports:
+      - "9092:9091"
+
+  # ---------------------------------------------------------------------------
   # Grafana: Telemetry Dashboards & Visualization
   # ---------------------------------------------------------------------------
   grafana:
@@ -789,6 +800,12 @@ configs:
       	reverse_proxy prometheus:9090
       }
 
+      # Prometheus Pushgateway Web UI & API
+      pushgateway.{$$DOMAIN:homelab.local} {
+      	tls internal
+      	reverse_proxy pushgateway:9091
+      }
+
       # Oxidized Web UI & REST
       oxidized.{$$DOMAIN:homelab.local} {
       	tls internal
@@ -1151,6 +1168,16 @@ configs:
               labels:
                 role: "security"
                 service: "trivy"
+
+        # LibreNMS SNMP Poller Metrics (via Pushgateway)
+        - job_name: "librenms"
+          honor_labels: true
+          scrape_interval: 1m
+          static_configs:
+            - targets: ["pushgateway:9091"]
+              labels:
+                role: "network_snmp"
+                source: "librenms"
   prom_alerts:
     content: |
       groups:
@@ -1308,6 +1335,12 @@ configs:
               description: IPAM & Infrastructure Source of Truth
               server: my-docker
               container: netbox
+          - Pushgateway:
+              icon: prometheus
+              href: https://pushgateway.${DOMAIN:-iye.internal}
+              description: Prometheus Pushgateway (LibreNMS Ingestion)
+              server: my-docker
+              container: pushgateway
 
       - Virtualization & Servers:
           - Proxmox PVE 1:

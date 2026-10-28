@@ -54,6 +54,7 @@ This stack provides centralized network monitoring, automated configuration vers
 | **SNMP Trapd** | `librenms/librenms:latest` | `162` (UDP/TCP) | Ingests real-time hardware alerts and link state traps from switches |
 | **Oxidized** | `oxidized/oxidized:latest` | `8888` | Automated configuration backup engine saving RouterOS and OpenWrt configs into Git |
 | **Prometheus** | `prom/prometheus:latest` | `9090` | Time-series metrics scraper with alert rules for Proxmox, switches, and APs |
+| **Pushgateway** | `prom/pushgateway:latest` | `9092` (9091) | Prometheus metrics ingestion buffer forwarding LibreNMS SNMP poller telemetry |
 | **Grafana** | `grafana/grafana-oss:latest` | `3000` | Telemetry dashboards pre-provisioned with the Prometheus data source |
 | **Trivy** | `aquasec/trivy:latest` | `4954` | Vulnerability and security scanner server for containers, images, and filesystems |
 | **Trivy Exporter** | `aquasec/trivy:latest` | `9091` | Automated container vulnerability scanner discovering running Docker containers & exporting Prometheus metrics |
@@ -91,6 +92,7 @@ All HTTP/HTTPS requests to these URLs are intercepted by **Caddy** on ports 80/4
 | **`librenms.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | LibreNMS Web UI |
 | **`grafana.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Grafana Telemetry Dashboards |
 | **`prometheus.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Prometheus Web UI & Scrape Engine |
+| **`pushgateway.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Prometheus Pushgateway (LibreNMS Metrics) |
 | **`oxidized.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Oxidized Web UI & REST API |
 | **`trivy.iye.internal`** | `A` or `CNAME` | `<DOCKER_HOST_IP>` | Trivy Security Scanner API |
 
@@ -119,7 +121,7 @@ These records allow LibreNMS, Prometheus, and Homepage to reach your physical ha
 #### Example `/etc/hosts` Block (for local testing):
 ```hosts
 # Homelab Stack Services (Docker Host)
-192.168.254.164  homelab.iye.internal iye.internal netbox.iye.internal librenms.iye.internal grafana.iye.internal prometheus.iye.internal oxidized.iye.internal trivy.iye.internal dockhand.iye.internal pdf.iye.internal bentopdf.iye.internal docker-homelab.iye.internal
+192.168.254.164  homelab.iye.internal iye.internal netbox.iye.internal librenms.iye.internal grafana.iye.internal prometheus.iye.internal pushgateway.iye.internal oxidized.iye.internal trivy.iye.internal dockhand.iye.internal pdf.iye.internal bentopdf.iye.internal docker-homelab.iye.internal
 
 # Homelab Devices
 192.168.254.111  virt-1.iye.internal
