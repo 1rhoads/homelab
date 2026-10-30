@@ -23,21 +23,37 @@
   "panels": [
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
       "id": 1,
       "title": "Fleet Health & Service Reachability",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "mappings": [
             {
               "options": {
-                "0": { "color": "red", "text": "DOWN" },
-                "1": { "color": "green", "text": "UP" }
+                "0": {
+                  "color": "red",
+                  "text": "DOWN"
+                },
+                "1": {
+                  "color": "green",
+                  "text": "UP"
+                }
               },
               "type": "value"
             }
@@ -45,65 +61,105 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red", "value": null },
-              { "color": "green", "value": 1 }
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
             ]
           }
         },
         "overrides": []
       },
-      "gridPos": { "h": 4, "w": 24, "x": 0, "y": 1 },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
       "id": 2,
       "options": {
         "colorMode": "background",
         "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "horizontal",
+        "justifyMode": "center",
+        "orientation": "auto",
         "reduceOptions": {
-          "calcs": ["lastNotNull"],
+          "calcs": [
+            "lastNotNull"
+          ],
           "fields": "",
           "values": false
         },
-        "textMode": "auto"
+        "textMode": "value_and_name"
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "editorMode": "code",
-          "expr": "up",
-          "legendFormat": "{{job}} / {{instance}}",
-          "range": true,
-          "refId": "A"
+          "expr": "label_replace(label_replace(label_replace(label_replace(label_replace(up, \"clean_target\", \"$1\", \"instance\", \"^([a-zA-Z0-9_\\-]+)(?:\\.[a-zA-Z0-9.-]+)?(?::\\d+)?$\"), \"clean_target\", \"docker-host\", \"clean_target\", \"docker-homelab\"), \"clean_target\", \"caddy\", \"clean_target\", \"homelab_caddy\"), \"clean_target\", \"trivy\", \"clean_target\", \"trivy_exporter\"), \"clean_target\", \"prometheus\", \"clean_target\", \"localhost\")",
+          "legendFormat": "{{clean_target}}",
+          "range": false,
+          "refId": "A",
+          "instant": true
         }
       ],
       "title": "Telemetry Targets Reachability (Up / Down)",
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "blue", "value": null }]
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              }
+            ]
           }
         }
       },
-      "gridPos": { "h": 3, "w": 6, "x": 0, "y": 5 },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 0,
+        "y": 6
+      },
       "id": 3,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
         "textMode": "auto"
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "count(up == 1)",
           "legendFormat": "Targets Online",
           "refId": "A"
@@ -113,30 +169,53 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "green", "value": null }]
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
           }
         }
       },
-      "gridPos": { "h": 3, "w": 6, "x": 6, "y": 5 },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 6,
+        "y": 6
+      },
       "id": 4,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
         "textMode": "auto"
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "sum(wifi_stations{ifname!~'.*mesh.*'})",
           "legendFormat": "Clients",
           "refId": "A"
@@ -146,30 +225,53 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "purple", "value": null }]
+            "steps": [
+              {
+                "color": "purple",
+                "value": null
+              }
+            ]
           }
         }
       },
-      "gridPos": { "h": 3, "w": 6, "x": 12, "y": 5 },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 12,
+        "y": 6
+      },
       "id": 5,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
         "textMode": "auto"
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "count(up{job='proxmox'} == 1)",
           "legendFormat": "Hypervisors",
           "refId": "A"
@@ -179,30 +281,53 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
-            "steps": [{ "color": "orange", "value": null }]
+            "steps": [
+              {
+                "color": "orange",
+                "value": null
+              }
+            ]
           }
         }
       },
-      "gridPos": { "h": 3, "w": 6, "x": 18, "y": 5 },
+      "gridPos": {
+        "h": 3,
+        "w": 6,
+        "x": 18,
+        "y": 6
+      },
       "id": 6,
       "options": {
         "colorMode": "value",
         "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
         "textMode": "auto"
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "count(up{job='openwrt'} == 1)",
           "legendFormat": "Access Points",
           "refId": "A"
@@ -213,40 +338,72 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 8 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
       "id": 7,
       "title": "Compute Infrastructure Snapshot",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "max": 100,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "#EAB839", "value": 70 },
-              { "color": "red", "value": 85 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
             ]
           },
           "unit": "percent"
         }
       },
-      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 9 },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 0,
+        "y": 10
+      },
       "id": 8,
       "options": {
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "avg(100 - (rate(node_cpu_seconds_total{job='proxmox',mode='idle'}[5m]) * 100))",
           "legendFormat": "Proxmox Cluster CPU",
           "refId": "A"
@@ -256,34 +413,61 @@
       "type": "gauge"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "max": 100,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "#EAB839", "value": 75 },
-              { "color": "red", "value": 90 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
             ]
           },
           "unit": "percent"
         }
       },
-      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 9 },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 6,
+        "y": 10
+      },
       "id": 9,
       "options": {
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "avg((1 - (node_memory_MemAvailable_bytes{job='proxmox'} / node_memory_MemTotal_bytes{job='proxmox'})) * 100)",
           "legendFormat": "Proxmox Cluster RAM",
           "refId": "A"
@@ -293,34 +477,61 @@
       "type": "gauge"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "max": 100,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "#EAB839", "value": 70 },
-              { "color": "red", "value": 85 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 85
+              }
             ]
           },
           "unit": "percent"
         }
       },
-      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 9 },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 12,
+        "y": 10
+      },
       "id": 10,
       "options": {
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "100 - (avg(rate(node_cpu_seconds_total{job='docker-host',mode='idle'}[5m])) * 100)",
           "legendFormat": "Docker Host CPU",
           "refId": "A"
@@ -330,34 +541,61 @@
       "type": "gauge"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "max": 100,
           "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "#EAB839", "value": 75 },
-              { "color": "red", "value": 90 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 75
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
             ]
           },
           "unit": "percent"
         }
       },
-      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 9 },
+      "gridPos": {
+        "h": 5,
+        "w": 6,
+        "x": 18,
+        "y": 10
+      },
       "id": 11,
       "options": {
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
         "showThresholdLabels": false,
         "showThresholdMarkers": true
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "(1 - (node_memory_MemAvailable_bytes{job='docker-host'} / node_memory_MemTotal_bytes{job='docker-host'})) * 100",
           "legendFormat": "Docker Host RAM",
           "refId": "A"
@@ -367,7 +605,10 @@
       "type": "gauge"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -379,15 +620,28 @@
           "unit": "percent"
         }
       },
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 14 },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 15
+      },
       "id": 12,
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "multi" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{job='proxmox',mode='idle'}[5m])) * 100)",
           "legendFormat": "{{instance}}",
           "refId": "A"
@@ -397,7 +651,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -409,15 +666,28 @@
           "unit": "percent"
         }
       },
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 14 },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 15
+      },
       "id": 13,
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "multi" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "(1 - (node_memory_MemAvailable_bytes{job='proxmox'} / node_memory_MemTotal_bytes{job='proxmox'})) * 100",
           "legendFormat": "{{instance}}",
           "refId": "A"
@@ -428,13 +698,21 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 21 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
       "id": 14,
       "title": "Wireless Network & OpenWrt Fleet",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -442,20 +720,40 @@
             "fillOpacity": 20,
             "lineInterpolation": "smooth",
             "lineWidth": 2,
-            "stacking": { "group": "A", "mode": "normal" }
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            }
           },
           "unit": "short"
         }
       },
-      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 22 },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 23
+      },
       "id": 15,
       "options": {
-        "legend": { "displayMode": "table", "placement": "bottom", "calcs": ["lastNotNull", "max"] },
-        "tooltip": { "mode": "multi" }
+        "legend": {
+          "displayMode": "table",
+          "placement": "bottom",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "sum(wifi_stations{job='openwrt',ifname!~'.*mesh.*'}) by (instance)",
           "legendFormat": "{{instance}}",
           "refId": "A"
@@ -465,7 +763,10 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -477,15 +778,28 @@
           "unit": "short"
         }
       },
-      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 22 },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 23
+      },
       "id": 16,
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "multi" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "node_load1{job='openwrt'}",
           "legendFormat": "{{instance}}",
           "refId": "A"
@@ -496,13 +810,21 @@
     },
     {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 29 },
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 30
+      },
       "id": 17,
       "title": "Caddy Reverse Proxy & Traffic",
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -514,15 +836,28 @@
           "unit": "reqps"
         }
       },
-      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 30 },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 0,
+        "y": 31
+      },
       "id": 18,
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "single" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "sum(rate(caddy_http_requests_total[5m])) by (server)",
           "legendFormat": "{{server}}",
           "refId": "A"
@@ -532,15 +867,26 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "thresholds" },
+          "color": {
+            "mode": "thresholds"
+          },
           "mappings": [
             {
               "options": {
-                "0": { "color": "red", "text": "DEGRADED" },
-                "1": { "color": "green", "text": "HEALTHY" }
+                "0": {
+                  "color": "red",
+                  "text": "DEGRADED"
+                },
+                "1": {
+                  "color": "green",
+                  "text": "HEALTHY"
+                }
               },
               "type": "value"
             }
@@ -548,25 +894,44 @@
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "red", "value": null },
-              { "color": "green", "value": 1 }
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 1
+              }
             ]
           }
         }
       },
-      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 30 },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 8,
+        "y": 31
+      },
       "id": 19,
       "options": {
         "colorMode": "background",
         "graphMode": "none",
         "justifyMode": "center",
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "values": false
+        },
         "textMode": "auto"
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "caddy_reverse_proxy_upstreams_healthy",
           "legendFormat": "{{upstream}}",
           "refId": "A"
@@ -576,7 +941,10 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "PBFA97CFB590B2093"
+      },
       "fieldConfig": {
         "defaults": {
           "custom": {
@@ -588,15 +956,28 @@
           "unit": "s"
         }
       },
-      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 30 },
+      "gridPos": {
+        "h": 7,
+        "w": 8,
+        "x": 16,
+        "y": 31
+      },
       "id": 20,
       "options": {
-        "legend": { "displayMode": "list", "placement": "bottom" },
-        "tooltip": { "mode": "single" }
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
+          "datasource": {
+            "type": "prometheus",
+            "uid": "PBFA97CFB590B2093"
+          },
           "expr": "histogram_quantile(0.95, sum(rate(caddy_http_request_duration_seconds_bucket[5m])) by (le))",
           "legendFormat": "p95 Latency",
           "refId": "A"
@@ -609,12 +990,21 @@
   "refresh": "15s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["homelab", "overview", "infrastructure"],
-  "templating": { "list": [] },
-  "time": { "from": "now-6h", "to": "now" },
+  "tags": [
+    "homelab",
+    "overview",
+    "infrastructure"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
   "timepicker": {},
   "timezone": "",
   "title": "Homelab Overview",
   "uid": "homelab-overview",
-  "version": 2
+  "version": 3
 }
