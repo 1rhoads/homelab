@@ -347,6 +347,7 @@ The stack integrates **Ansible** and **Ansible Semaphore** for agentless, automa
   3. [`ansible/playbooks/patch_docker.yml`](ansible/playbooks/patch_docker.yml): Docker host OS package updates, Docker Engine upgrades, automated container image updates/re-creations (Watchtower one-shot), and dangling image pruning.
   4. [`ansible/playbooks/patch_openwrt.yml`](ansible/playbooks/patch_openwrt.yml): Rolling OpenWrt Attended Sysupgrade (`owut`) with post-reboot client verification.
   5. [`ansible/playbooks/patch_mikrotik.yml`](ansible/playbooks/patch_mikrotik.yml): MikroTik RouterOS and RouterBOOT firmware update checks and upgrades.
+  6. [`ansible/playbooks/sync_netbox.yml`](ansible/playbooks/sync_netbox.yml): Automated discovery synchronization reconciling LibreNMS SNMP assets, serials, and IPAM prefixes into NetBox.
 
 ### Running Playbooks via CLI or Semaphore
 ```bash

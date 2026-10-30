@@ -1,0 +1,31 @@
+---
+# ==============================================================================
+# Playbook: Synchronize Discovered Network Inventory from LibreNMS to NetBox
+# ==============================================================================
+- name: Synchronize LibreNMS Discovered Devices to NetBox IPAM & DCIM
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    netbox_url: "{{ lookup('env', 'NETBOX_URL') | default('https://netbox.iye.internal', true) }}"
+    netbox_token: "{{ lookup('env', 'NETBOX_TOKEN') | default('0123456789abcdef0123456789abcdef01234567', true) }}"
+    librenms_url: "{{ lookup('env', 'LIBRENMS_URL') | default('https://librenms.iye.internal', true) }}"
+    librenms_token: "{{ lookup('env', 'LIBRENMS_TOKEN') | default('4|ONVizl4EosPEvyiqYtMkazgBzCAbph7sS47NQdk4c32e92c5', true) }}"
+    sync_script_path: "{{ playbook_dir }}/../../scripts/sync_librenms_to_netbox.py"
+
+  tasks:
+    - name: Execute LibreNMS to NetBox synchronization
+      ansible.builtin.command:
+        cmd: >
+          python3 {{ sync_script_path }}
+          --netbox-url {{ netbox_url }}
+          --netbox-token {{ netbox_token }}
+          --librenms-url {{ librenms_url }}
+          --librenms-token {{ librenms_token }}
+      register: sync_result
+      changed_when: "'Created new device' in sync_result.stdout or 'Updated device' in sync_result.stdout or 'Assigned primary_ip4' in sync_result.stdout"
+
+    - name: Display synchronization summary
+      ansible.builtin.debug:
+        var: sync_result.stdout_lines
