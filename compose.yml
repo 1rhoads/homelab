@@ -294,8 +294,8 @@ services:
     command:
       - >
         mkdir -p /home/oxidized/.config/oxidized &&
-        cp /etc/oxidized/config /home/oxidized/.config/oxidized/config &&
-        cp /etc/oxidized/router.db /home/oxidized/.config/oxidized/router.db &&
+        if [ -f /etc/oxidized/config ]; then cp /etc/oxidized/config /home/oxidized/.config/oxidized/config; fi &&
+        if [ -f /etc/oxidized/router.db ]; then cp /etc/oxidized/router.db /home/oxidized/.config/oxidized/router.db; fi &&
         chown -R oxidized:oxidized /home/oxidized/.config/oxidized &&
         exec gosu oxidized oxidized
     depends_on:
@@ -417,6 +417,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - trivy-cache:/root/.cache/
+      - trivy-exporter-data:/app
     depends_on:
       - trivy
 
@@ -440,6 +441,8 @@ services:
     configs:
       - source: mikrotik_exporter_script
         target: /app/exporter.py
+    volumes:
+      - mikrotik-exporter-data:/app
 
   # ---------------------------------------------------------------------------
   # Ansible Semaphore: Web UI & Automation Control Plane
@@ -753,6 +756,8 @@ volumes:
   authentik-custom-templates:
   authentik-certs-data:
   dockhand-data:
+  mikrotik-exporter-data:
+  trivy-exporter-data:
 
 # -----------------------------------------------------------------------------
 # Embedded Configurations (Self-Contained for Portainer Web Editor & Git)
